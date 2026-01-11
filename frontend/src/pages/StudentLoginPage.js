@@ -80,9 +80,11 @@ const StudentLoginPage = () => {
                     onChange={(e) => setDob(e.target.value)}
                     className="pr-10"
                     data-testid="dob-input"
+                    placeholder="DD-MM-YYYY"
                   />
                   <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 </div>
+                <p className="text-xs text-slate-500">Use the calendar picker or type your date of birth</p>
               </div>
 
               <Button 
