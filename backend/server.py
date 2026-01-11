@@ -182,15 +182,24 @@ async def startup_event():
 
 @api_router.post("/auth/student/login")
 async def student_login(data: StudentLogin):
-    student = await db.students.find_one({"roll_number": data.roll_number}, {"_id": 0})
+    # Find student by roll number and ensure not deleted
+    student = await db.students.find_one({
+        "roll_number": data.roll_number,
+        "is_deleted": False
+    }, {"_id": 0})
+    
     if not student:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Compare DOB exactly as stored (DD-MM-YYYY format)
     if student.get("dob") != data.dob:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Remove sensitive fields before returning
+    user_data = {k: v for k, v in student.items() if k not in ["admin_notes", "is_deleted"]}
+    
     token = create_token(student["id"], "student", {"roll_number": student["roll_number"]})
-    return {"token": token, "user": student, "role": "student"}
+    return {"token": token, "user": user_data, "role": "student"}
 
 @api_router.post("/auth/admin/login")
 async def admin_login(data: AdminLogin):
