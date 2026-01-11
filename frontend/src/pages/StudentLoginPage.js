@@ -25,7 +25,11 @@ const StudentLoginPage = () => {
 
     setLoading(true);
     try {
-      await studentLogin(rollNumber.toUpperCase(), dob);
+      // Convert date from YYYY-MM-DD (HTML date input) to DD-MM-YYYY (backend format)
+      const [year, month, day] = dob.split('-');
+      const formattedDob = `${day}-${month}-${year}`;
+      
+      await studentLogin(rollNumber.toUpperCase(), formattedDob);
       toast.success('Login successful!');
       navigate('/student');
     } catch (error) {
