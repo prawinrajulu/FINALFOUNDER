@@ -80,8 +80,6 @@ class AdminPasswordChange(BaseModel):
 class ItemCreate(BaseModel):
     item_type: str  # "lost" or "found"
     description: str
-    date: str
-    time: str
     location: str
 
 class ClaimRequest(BaseModel):
