@@ -56,13 +56,13 @@ class StudentCreate(BaseModel):
     full_name: str
     department: str
     year: str
-    dob: str  # YYYY-MM-DD
+    dob: str  # DD-MM-YYYY format (e.g., 17-04-2006)
     email: str
     phone_number: str
 
 class StudentLogin(BaseModel):
     roll_number: str
-    dob: str  # YYYY-MM-DD
+    dob: str  # DD-MM-YYYY format (e.g., 17-04-2006)
 
 class AdminLogin(BaseModel):
     username: str
