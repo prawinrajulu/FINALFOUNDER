@@ -243,44 +243,77 @@ async def upload_students_excel(file: UploadFile = File(...), current_user: dict
     content = await file.read()
     df = pd.read_excel(BytesIO(content))
     
+    # Validate required columns (case-insensitive)
     required_columns = ["Roll Number", "Full Name", "Department", "Year", "DOB", "Email", "Phone Number"]
-    missing = [col for col in required_columns if col not in df.columns]
+    df_columns_lower = [col.strip().lower() for col in df.columns]
+    required_lower = [col.lower() for col in required_columns]
+    
+    missing = [col for col in required_columns if col.lower() not in df_columns_lower]
     if missing:
-        raise HTTPException(status_code=400, detail=f"Missing columns: {', '.join(missing)}")
+        raise HTTPException(status_code=400, detail=f"Missing required columns: {', '.join(missing)}")
+    
+    # Create column mapping (case-insensitive)
+    column_map = {}
+    for req_col in required_columns:
+        for df_col in df.columns:
+            if df_col.strip().lower() == req_col.lower():
+                column_map[req_col] = df_col
+                break
     
     added = 0
     skipped = 0
     errors = []
     
+    # Get current date and time for upload tracking
+    upload_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    upload_time = datetime.now(timezone.utc).strftime("%H:%M:%S")
+    
     for idx, row in df.iterrows():
-        roll_number = str(row["Roll Number"]).strip()
-        existing = await db.students.find_one({"roll_number": roll_number})
-        if existing:
-            skipped += 1
-            continue
-        
         try:
-            dob_value = row["DOB"]
-            if isinstance(dob_value, datetime):
-                dob_str = dob_value.strftime("%Y-%m-%d")
-            else:
-                dob_str = str(dob_value).strip()
+            roll_number = str(row[column_map["Roll Number"]]).strip()
             
+            # Check for duplicate - skip if already exists
+            existing = await db.students.find_one({"roll_number": roll_number, "is_deleted": False})
+            if existing:
+                skipped += 1
+                continue
+            
+            # Handle DOB - support both DD-MM-YYYY and datetime objects
+            dob_value = row[column_map["DOB"]]
+            if isinstance(dob_value, datetime):
+                # If pandas parsed it as datetime, convert to DD-MM-YYYY
+                dob_str = dob_value.strftime("%d-%m-%Y")
+            else:
+                # Keep as string, ensure it's in DD-MM-YYYY format
+                dob_str = str(dob_value).strip()
+                # Validate format
+                if dob_str and len(dob_str) == 10 and dob_str[2] == '-' and dob_str[5] == '-':
+                    pass  # Format looks correct DD-MM-YYYY
+                else:
+                    errors.append(f"Row {idx + 2}: Invalid DOB format. Expected DD-MM-YYYY, got: {dob_str}")
+                    continue
+            
+            # Create student document with all required fields
             student = {
                 "id": str(uuid.uuid4()),
                 "roll_number": roll_number,
-                "full_name": str(row["Full Name"]).strip(),
-                "department": str(row["Department"]).strip(),
-                "year": str(row["Year"]).strip(),
-                "dob": dob_str,
-                "email": str(row["Email"]).strip(),
-                "phone_number": str(row["Phone Number"]).strip(),
+                "full_name": str(row[column_map["Full Name"]]).strip(),
+                "department": str(row[column_map["Department"]]).strip(),
+                "year": str(row[column_map["Year"]]).strip(),
+                "dob": dob_str,  # Store in DD-MM-YYYY format
+                "email": str(row[column_map["Email"]]).strip(),
+                "phone_number": str(row[column_map["Phone Number"]]).strip(),
                 "profile_picture": None,
                 "admin_notes": [],
+                "upload_date": upload_date,  # When student was added
+                "upload_time": upload_time,  # Time student was added
+                "is_deleted": False,  # Soft delete flag
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
+            
             await db.students.insert_one(student)
             added += 1
+            
         except Exception as e:
             errors.append(f"Row {idx + 2}: {str(e)}")
     
