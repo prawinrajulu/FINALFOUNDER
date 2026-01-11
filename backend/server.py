@@ -302,6 +302,9 @@ async def upload_students_excel(file: UploadFile = File(...), current_user: dict
                     errors.append(f"Row {idx + 2}: Invalid DOB format. Expected DD-MM-YYYY, got: {dob_str}")
                     continue
             
+            # Get current timestamp for creation tracking
+            now = datetime.now(timezone.utc)
+            
             # Create student document with all required fields
             student = {
                 "id": str(uuid.uuid4()),
@@ -312,12 +315,9 @@ async def upload_students_excel(file: UploadFile = File(...), current_user: dict
                 "dob": dob_str,  # Store in DD-MM-YYYY format
                 "email": str(row[column_map["Email"]]).strip(),
                 "phone_number": str(row[column_map["Phone Number"]]).strip(),
-                "profile_picture": None,
-                "admin_notes": [],
-                "upload_date": upload_date,  # When student was added
-                "upload_time": upload_time,  # Time student was added
-                "is_deleted": False,  # Soft delete flag
-                "created_at": datetime.now(timezone.utc).isoformat()
+                "created_at": now.isoformat(),  # ISO datetime
+                "created_date": now.strftime("%Y-%m-%d"),  # YYYY-MM-DD
+                "created_time": now.strftime("%H:%M:%S")   # HH:MM:SS
             }
             
             await db.students.insert_one(student)
