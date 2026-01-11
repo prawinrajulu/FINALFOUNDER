@@ -325,6 +325,7 @@ async def upload_students_excel(file: UploadFile = File(...), current_user: dict
     
     return {
         "message": f"Upload complete. Added: {added}, Skipped (duplicates): {skipped}",
+        "total_rows": total_rows,
         "added": added,
         "skipped": skipped,
         "errors": errors
