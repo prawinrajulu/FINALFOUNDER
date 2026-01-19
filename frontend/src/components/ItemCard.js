@@ -20,14 +20,19 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const ItemCard = ({ 
   item, 
-  showActions = false, 
+  showActions = false,
+  showClaimButton = false,
   onDelete, 
   onView,
+  onUpdate,
   showStudent = false 
 }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showClaimDialog, setShowClaimDialog] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
+  const [claimDetails, setClaimDetails] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [claiming, setClaiming] = useState(false);
 
   const handleDelete = async () => {
     if (!deleteReason.trim()) return;
@@ -39,6 +44,30 @@ export const ItemCard = ({
       console.error('Delete failed:', error);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleClaim = async () => {
+    if (!claimDetails.trim()) {
+      toast.error('Please provide claim details');
+      return;
+    }
+    
+    setClaiming(true);
+    try {
+      await claimsAPI.createClaim({
+        item_id: item.id,
+        details: claimDetails
+      });
+      toast.success('Claim submitted successfully!');
+      setShowClaimDialog(false);
+      setClaimDetails('');
+      if (onUpdate) await onUpdate();
+    } catch (error) {
+      console.error('Claim failed:', error);
+      toast.error(error.response?.data?.detail || 'Failed to submit claim');
+    } finally {
+      setClaiming(false);
     }
   };
 
