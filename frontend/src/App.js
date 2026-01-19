@@ -101,6 +101,8 @@ function AppRoutes() {
         }
       >
         <Route index element={<StudentDashboard />} />
+        <Route path="lost-items" element={<StudentLostItems />} />
+        <Route path="found-items" element={<StudentFoundItems />} />
         <Route path="report-lost" element={<ReportLostPage />} />
         <Route path="report-found" element={<ReportFoundPage />} />
         <Route path="my-items" element={<MyItemsPage />} />
