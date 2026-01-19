@@ -84,10 +84,21 @@ const SuperAdminRoute = ({ children }) => {
 };
 
 function AppRoutes() {
+  const { isAuthenticated, isStudent, isAdmin } = useAuth();
+  
+  // Smart home redirect based on authentication
+  const getHomeRedirect = () => {
+    if (isAuthenticated) {
+      if (isStudent) return <Navigate to="/student" replace />;
+      if (isAdmin) return <Navigate to="/admin" replace />;
+    }
+    return <PublicPage />;
+  };
+  
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<PublicPage />} />
+      <Route path="/" element={getHomeRedirect()} />
       <Route path="/student/login" element={<StudentLoginPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
 
