@@ -204,15 +204,25 @@ async def student_login(data: StudentLogin):
 
 @api_router.post("/auth/admin/login")
 async def admin_login(data: AdminLogin):
+    # DEBUG: Log incoming request
+    logging.info(f"Admin login attempt - Username: '{data.username}', Password length: {len(data.password)}")
+    
     admin = await db.admins.find_one({"username": data.username}, {"_id": 0})
     if not admin:
+        logging.warning(f"Admin not found: '{data.username}'")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    if not verify_password(data.password, admin["password"]):
+    # DEBUG: Test password
+    is_valid = verify_password(data.password, admin["password"])
+    logging.info(f"Password verification result: {is_valid}")
+    
+    if not is_valid:
+        logging.warning(f"Password verification failed for: '{data.username}'")
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     admin_safe = {k: v for k, v in admin.items() if k != "password"}
     token = create_token(admin["id"], admin["role"], {"username": admin["username"]})
+    logging.info(f"Login successful for: '{data.username}'")
     return {"token": token, "user": admin_safe, "role": admin["role"]}
 
 @api_router.get("/auth/me")
