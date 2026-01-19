@@ -1,11 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, Search, Package, ClipboardList, User, LogOut } from 'lucide-react';
+import { Home, Search, Package, ClipboardList, User, LogOut, Eye, EyeOff } from 'lucide-react';
 
 const navItems = [
   { to: '/student', icon: Home, label: 'Home', exact: true },
-  { to: '/student/report-lost', icon: Search, label: 'Report Lost' },
-  { to: '/student/report-found', icon: Package, label: 'Report Found' },
+  { to: '/student/lost-items', icon: Search, label: 'Lost Items' },
+  { to: '/student/found-items', icon: Package, label: 'Found Items' },
   { to: '/student/my-items', icon: ClipboardList, label: 'My Items' },
   { to: '/student/profile', icon: User, label: 'Profile' },
 ];
