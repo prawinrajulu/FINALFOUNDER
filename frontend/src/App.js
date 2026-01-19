@@ -9,6 +9,8 @@ import StudentLoginPage from "./pages/StudentLoginPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import StudentLayout from "./pages/StudentLayout";
 import StudentDashboard from "./pages/StudentDashboard";
+import StudentLostItems from "./pages/StudentLostItems";
+import StudentFoundItems from "./pages/StudentFoundItems";
 import ReportLostPage from "./pages/ReportLostPage";
 import ReportFoundPage from "./pages/ReportFoundPage";
 import MyItemsPage from "./pages/MyItemsPage";
