@@ -973,12 +973,51 @@ async def create_ai_powered_claim(
     
     # Perform AI similarity analysis
     ai_analysis = {"match_percentage": 0, "reasoning": "AI analysis not available"}
+    verification_questions = []
     
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
         
         api_key = os.environ.get("EMERGENT_LLM_KEY")
         if api_key:
+            # First: Generate verification questions from secret_message
+            secret_message = item.get("secret_message", "")
+            
+            if secret_message:
+                try:
+                    question_chat = LlmChat(
+                        api_key=api_key,
+                        session_id=f"verification_gen_{item_id}_{datetime.now().timestamp()}",
+                        system_message="""You are generating ownership verification questions from secret identification messages.
+                        Generate 2-5 specific questions that only the true owner would know.
+                        Return ONLY a valid JSON array of strings.
+                        Example: ["What color is the tear on the purse?", "Which side has the tear?"]"""
+                    )
+                    
+                    question_prompt = f"""Generate 2-5 verification questions from this secret message:
+"{secret_message}"
+
+Return ONLY a JSON array of question strings. Be specific and detailed."""
+                    
+                    q_response = question_chat.send_user_message(UserMessage(content=question_prompt))
+                    q_text = q_response.content.strip()
+                    
+                    if "```json" in q_text:
+                        q_text = q_text.split("```json")[1].split("```")[0].strip()
+                    elif "```" in q_text:
+                        q_text = q_text.split("```")[1].split("```")[0].strip()
+                    
+                    verification_questions = json.loads(q_text)
+                    logging.info(f"Generated {len(verification_questions)} verification questions")
+                
+                except Exception as qe:
+                    logging.error(f"Question generation failed: {str(qe)}")
+                    verification_questions = [
+                        "Can you describe any unique features or marks on the item?",
+                        "Where exactly did you lose this item?"
+                    ]
+            
+            # Second: Perform similarity analysis
             chat = LlmChat(
                 api_key=api_key,
                 session_id=f"claim_analysis_{item_id}_{current_user['sub']}_{datetime.now().timestamp()}",
@@ -1029,8 +1068,12 @@ Return JSON with match_percentage (0-100) and reasoning."""
             "match_percentage": 0,
             "reasoning": f"AI analysis unavailable: {str(e)}"
         }
+        verification_questions = [
+            "Can you describe any unique features or marks on the item?",
+            "Where exactly did you lose this item?"
+        ]
     
-    # Create claim with AI analysis
+    # Create claim with AI analysis and verification questions
     claim = {
         "id": str(uuid.uuid4()),
         "item_id": item_id,
@@ -1039,9 +1082,9 @@ Return JSON with match_percentage (0-100) and reasoning."""
         "claim_data": claim_data,
         "proof_image_url": proof_image_url,
         "ai_analysis": ai_analysis,
-        "status": "pending",
-        "verification_questions": [],
+        "verification_questions": verification_questions,  # Generated from secret_message
         "verification_answers": [],
+        "status": "pending",
         "admin_notes": "",
         "created_at": datetime.now(timezone.utc).isoformat()
     }
@@ -1051,7 +1094,8 @@ Return JSON with match_percentage (0-100) and reasoning."""
     return {
         "message": "AI-powered claim submitted successfully",
         "claim_id": claim["id"],
-        "ai_analysis": ai_analysis
+        "ai_analysis": ai_analysis,
+        "verification_questions": verification_questions
     }
 
 @api_router.get("/claims")
