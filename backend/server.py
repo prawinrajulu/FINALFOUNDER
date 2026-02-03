@@ -1211,7 +1211,7 @@ async def delete_admin(admin_id: str, current_user: dict = Depends(require_super
 
 @api_router.post("/folders")
 async def create_folder(data: FolderCreate, current_user: dict = Depends(require_super_admin)):
-    """Create a department or year folder"""
+    """Create a department or year folder with atomic operation"""
     if data.type not in ["department", "year"]:
         raise HTTPException(status_code=400, detail="Folder type must be 'department' or 'year'")
     
@@ -1224,26 +1224,66 @@ async def create_folder(data: FolderCreate, current_user: dict = Depends(require
         if not parent:
             raise HTTPException(status_code=404, detail="Parent department not found")
     
-    # Check for duplicate
-    existing = await db.folders.find_one({
-        "name": data.name,
-        "type": data.type,
-        "parent_id": data.parent_id
-    })
-    if existing:
-        raise HTTPException(status_code=400, detail=f"{data.type.capitalize()} folder with this name already exists")
+    try:
+        # Check for duplicate with exact match
+        existing = await db.folders.find_one({
+            "name": data.name,
+            "type": data.type,
+            "parent_id": data.parent_id
+        })
+        if existing:
+            # Return success with existing folder to avoid frontend confusion
+            logging.warning(f"Folder already exists: {data.name} ({data.type})")
+            return {
+                "message": f"{data.type.capitalize()} folder already exists", 
+                "folder_id": existing["id"], 
+                "folder": existing,
+                "already_exists": True
+            }
+        
+        folder = {
+            "id": str(uuid.uuid4()),
+            "name": data.name,
+            "type": data.type,
+            "parent_id": data.parent_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_by": current_user["sub"]
+        }
+        
+        # Atomic insert
+        result = await db.folders.insert_one(folder)
+        
+        # Verify insertion
+        if not result.inserted_id:
+            raise HTTPException(status_code=500, detail="Failed to create folder")
+        
+        # Remove MongoDB _id from response
+        folder.pop("_id", None)
+        
+        return {
+            "message": f"{data.type.capitalize()} folder created successfully", 
+            "folder_id": folder["id"], 
+            "folder": folder,
+            "already_exists": False
+        }
     
-    folder = {
-        "id": str(uuid.uuid4()),
-        "name": data.name,
-        "type": data.type,
-        "parent_id": data.parent_id,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "created_by": current_user["sub"]
-    }
-    
-    await db.folders.insert_one(folder)
-    return {"message": f"{data.type.capitalize()} folder created", "folder_id": folder["id"], "folder": folder}
+    except Exception as e:
+        logging.error(f"Error creating folder: {str(e)}")
+        # Check again if folder was created during error
+        check_folder = await db.folders.find_one({
+            "name": data.name,
+            "type": data.type,
+            "parent_id": data.parent_id
+        })
+        if check_folder:
+            check_folder.pop("_id", None)
+            return {
+                "message": f"{data.type.capitalize()} folder created", 
+                "folder_id": check_folder["id"], 
+                "folder": check_folder,
+                "already_exists": True
+            }
+        raise HTTPException(status_code=500, detail=f"Failed to create folder: {str(e)}")
 
 @api_router.get("/folders")
 async def get_folders(current_user: dict = Depends(require_super_admin)):
