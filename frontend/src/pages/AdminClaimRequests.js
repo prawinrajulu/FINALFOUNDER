@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
@@ -7,11 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../components/ui/dialog';
 import { Textarea } from '../components/ui/textarea';
 import { toast } from 'sonner';
-import { Sparkles, CheckCircle, XCircle, Clock, User, Package, MapPin, Calendar, TrendingUp, Eye, MessageSquare } from 'lucide-react';
+import { Sparkles, CheckCircle, XCircle, Clock, User, Package, MapPin, Calendar, TrendingUp, Eye, MessageSquare, ArrowLeft } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const AdminClaimRequests = () => {
+  const navigate = useNavigate();
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedClaim, setSelectedClaim] = useState(null);
