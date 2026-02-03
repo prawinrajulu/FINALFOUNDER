@@ -36,7 +36,8 @@ const ReportLostPage = () => {
     custom_keyword: '',
     description: '',
     location: '',
-    approximate_time: ''
+    approximate_time: '',
+    secret_message: ''  // NEW: Secret identification message
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
