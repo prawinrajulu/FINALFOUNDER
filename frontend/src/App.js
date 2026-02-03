@@ -5,6 +5,7 @@ import { Toaster } from "./components/ui/sonner";
 
 // Pages
 import PublicPage from "./pages/PublicPage";
+import CommonLobby from "./pages/CommonLobby";
 import StudentLoginPage from "./pages/StudentLoginPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import StudentLayout from "./pages/StudentLayout";
@@ -99,6 +100,7 @@ function AppRoutes() {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={getHomeRedirect()} />
+      <Route path="/lobby" element={<CommonLobby />} />
       <Route path="/student/login" element={<StudentLoginPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
 
