@@ -13,13 +13,21 @@ import { PublicHeader } from '../components/Header';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const PublicPage = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [lostItems, setLostItems] = useState([]);
   const [foundItems, setFoundItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const navigate = useNavigate();
+
+  const getRoleDisplay = () => {
+    if (!user) return null;
+    if (user.role === 'student') return 'Student';
+    if (user.role === 'super_admin') return 'Super Admin';
+    if (user.role === 'admin') return 'Admin';
+    return user.role;
+  };
 
   useEffect(() => {
     fetchItems();
