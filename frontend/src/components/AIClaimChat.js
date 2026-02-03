@@ -54,6 +54,7 @@ const AIClaimChat = ({ itemId, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [proofImage, setProofImage] = useState(null);
+  const [noProofChecked, setNoProofChecked] = useState(false);  // NEW: No proof checkbox
   const [loading, setLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
 
@@ -62,6 +63,12 @@ const AIClaimChat = ({ itemId, onClose }) => {
   const handleNext = () => {
     if (!answers[currentQuestion.id] && currentQuestion.type !== 'file') {
       toast.error('Please answer the question before proceeding');
+      return;
+    }
+    
+    // Special validation for proof image step
+    if (currentQuestion.type === 'file' && !proofImage && !noProofChecked) {
+      toast.error('Please upload a proof image or check "I don\'t have any proof image"');
       return;
     }
     
