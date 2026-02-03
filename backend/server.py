@@ -1207,6 +1207,277 @@ async def delete_admin(admin_id: str, current_user: dict = Depends(require_super
     await db.admins.delete_one({"id": admin_id})
     return {"message": "Admin deleted successfully"}
 
+# ===================== FOLDER MANAGEMENT (SUPER ADMIN) =====================
+
+@api_router.post("/folders")
+async def create_folder(data: FolderCreate, current_user: dict = Depends(require_super_admin)):
+    """Create a department or year folder"""
+    if data.type not in ["department", "year"]:
+        raise HTTPException(status_code=400, detail="Folder type must be 'department' or 'year'")
+    
+    # Validate parent for year folders
+    if data.type == "year" and not data.parent_id:
+        raise HTTPException(status_code=400, detail="Year folders must have a parent department")
+    
+    if data.type == "year" and data.parent_id:
+        parent = await db.folders.find_one({"id": data.parent_id, "type": "department"})
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent department not found")
+    
+    # Check for duplicate
+    existing = await db.folders.find_one({
+        "name": data.name,
+        "type": data.type,
+        "parent_id": data.parent_id
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail=f"{data.type.capitalize()} folder with this name already exists")
+    
+    folder = {
+        "id": str(uuid.uuid4()),
+        "name": data.name,
+        "type": data.type,
+        "parent_id": data.parent_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": current_user["sub"]
+    }
+    
+    await db.folders.insert_one(folder)
+    return {"message": f"{data.type.capitalize()} folder created", "folder_id": folder["id"], "folder": folder}
+
+@api_router.get("/folders")
+async def get_folders(current_user: dict = Depends(require_super_admin)):
+    """Get all folders in hierarchical structure"""
+    folders = await db.folders.find({}, {"_id": 0}).to_list(1000)
+    
+    # Build hierarchy
+    departments = [f for f in folders if f["type"] == "department"]
+    for dept in departments:
+        dept["years"] = [f for f in folders if f["type"] == "year" and f["parent_id"] == dept["id"]]
+        
+        # Get student count for each year
+        for year in dept["years"]:
+            year["student_count"] = await db.students.count_documents({"year_folder_id": year["id"]})
+    
+    return departments
+
+@api_router.get("/folders/{folder_id}")
+async def get_folder(folder_id: str, current_user: dict = Depends(require_super_admin)):
+    """Get folder details with students"""
+    folder = await db.folders.find_one({"id": folder_id}, {"_id": 0})
+    if not folder:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    if folder["type"] == "year":
+        # Get students in this year folder
+        students = await db.students.find(
+            {"year_folder_id": folder_id},
+            {"_id": 0}
+        ).to_list(1000)
+        folder["students"] = students
+        folder["student_count"] = len(students)
+        
+        # Get upload history
+        uploads = await db.excel_uploads.find(
+            {"year_folder_id": folder_id},
+            {"_id": 0}
+        ).sort("uploaded_at", -1).to_list(100)
+        folder["uploads"] = uploads
+    
+    return folder
+
+@api_router.put("/folders/{folder_id}")
+async def rename_folder(folder_id: str, data: FolderRename, current_user: dict = Depends(require_super_admin)):
+    """Rename folder and update all students if it's a year folder"""
+    folder = await db.folders.find_one({"id": folder_id})
+    if not folder:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    # Check for duplicate name
+    existing = await db.folders.find_one({
+        "name": data.name,
+        "type": folder["type"],
+        "parent_id": folder["parent_id"],
+        "id": {"$ne": folder_id}
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail=f"A {folder['type']} folder with this name already exists")
+    
+    old_name = folder["name"]
+    
+    # Update folder name
+    await db.folders.update_one({"id": folder_id}, {"$set": {"name": data.name}})
+    
+    # If it's a year folder, update all students
+    if folder["type"] == "year":
+        result = await db.students.update_many(
+            {"year_folder_id": folder_id},
+            {"$set": {"year": data.name}}
+        )
+        
+        # Log the bulk update
+        await db.audit_logs.insert_one({
+            "id": str(uuid.uuid4()),
+            "action": "year_folder_renamed",
+            "folder_id": folder_id,
+            "old_name": old_name,
+            "new_name": data.name,
+            "students_updated": result.modified_count,
+            "admin_id": current_user["sub"],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {
+            "message": f"Folder renamed and {result.modified_count} students updated",
+            "students_updated": result.modified_count
+        }
+    
+    return {"message": "Folder renamed successfully"}
+
+@api_router.delete("/folders/{folder_id}")
+async def delete_folder(folder_id: str, current_user: dict = Depends(require_super_admin)):
+    """Delete folder (with validation)"""
+    folder = await db.folders.find_one({"id": folder_id})
+    if not folder:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    # Check if it's a department with year folders
+    if folder["type"] == "department":
+        year_folders = await db.folders.count_documents({"parent_id": folder_id})
+        if year_folders > 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot delete department with year folders. Delete year folders first."
+            )
+    
+    # Check if it has students
+    if folder["type"] == "year":
+        student_count = await db.students.count_documents({"year_folder_id": folder_id})
+        if student_count > 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot delete folder with {student_count} students. Move or delete students first."
+            )
+    
+    await db.folders.delete_one({"id": folder_id})
+    return {"message": "Folder deleted successfully"}
+
+@api_router.post("/folders/{folder_id}/upload-excel")
+async def upload_excel_to_folder(
+    folder_id: str,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(require_super_admin)
+):
+    """Upload Excel file to a year folder - Department and Year come from folder structure"""
+    # Validate folder
+    year_folder = await db.folders.find_one({"id": folder_id, "type": "year"})
+    if not year_folder:
+        raise HTTPException(status_code=404, detail="Year folder not found")
+    
+    dept_folder = await db.folders.find_one({"id": year_folder["parent_id"], "type": "department"})
+    if not dept_folder:
+        raise HTTPException(status_code=404, detail="Department folder not found")
+    
+    department = dept_folder["name"]
+    year = year_folder["name"]
+    
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Only Excel files are allowed")
+    
+    content = await file.read()
+    df = pd.read_excel(BytesIO(content))
+    
+    # Required columns (Department and Year are now OPTIONAL - folder takes priority)
+    required_columns = ["Roll Number", "Full Name", "DOB", "Email", "Phone Number"]
+    df_columns_lower = [col.strip().lower() for col in df.columns]
+    required_lower = [col.lower() for col in required_columns]
+    
+    missing = [col for col in required_columns if col.lower() not in df_columns_lower]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"Missing required columns: {', '.join(missing)}")
+    
+    # Create column mapping
+    column_map = {}
+    for req_col in required_columns:
+        for df_col in df.columns:
+            if df_col.strip().lower() == req_col.lower():
+                column_map[req_col] = df_col
+                break
+    
+    added = 0
+    skipped = 0
+    errors = []
+    
+    for idx, row in df.iterrows():
+        try:
+            roll_number = str(row[column_map["Roll Number"]]).strip()
+            
+            # Check for duplicate
+            existing = await db.students.find_one({"roll_number": roll_number})
+            if existing:
+                skipped += 1
+                continue
+            
+            # Handle DOB
+            dob_value = row[column_map["DOB"]]
+            if isinstance(dob_value, datetime):
+                dob_str = dob_value.strftime("%d-%m-%Y")
+            else:
+                dob_str = str(dob_value).strip()
+                if dob_str and len(dob_str) == 10 and dob_str[2] == '-' and dob_str[5] == '-':
+                    pass
+                else:
+                    errors.append(f"Row {idx + 2}: Invalid DOB format. Expected DD-MM-YYYY, got: {dob_str}")
+                    continue
+            
+            now = datetime.now(timezone.utc)
+            
+            # Create student - Department and Year from FOLDER STRUCTURE
+            student = {
+                "id": str(uuid.uuid4()),
+                "roll_number": roll_number,
+                "full_name": str(row[column_map["Full Name"]]).strip(),
+                "department": department,  # From folder
+                "year": year,  # From folder
+                "dob": dob_str,
+                "email": str(row[column_map["Email"]]).strip(),
+                "phone_number": str(row[column_map["Phone Number"]]).strip(),
+                "department_folder_id": dept_folder["id"],
+                "year_folder_id": year_folder["id"],
+                "created_at": now.isoformat(),
+                "created_date": now.strftime("%Y-%m-%d"),
+                "created_time": now.strftime("%H:%M:%S")
+            }
+            
+            await db.students.insert_one(student)
+            added += 1
+            
+        except Exception as e:
+            errors.append(f"Row {idx + 2}: {str(e)}")
+    
+    # Log upload
+    upload_record = {
+        "id": str(uuid.uuid4()),
+        "filename": file.filename,
+        "year_folder_id": folder_id,
+        "department_folder_id": dept_folder["id"],
+        "uploaded_by": current_user["sub"],
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "students_added": added,
+        "students_skipped": skipped,
+        "errors": errors
+    }
+    await db.excel_uploads.insert_one(upload_record)
+    
+    return {
+        "message": f"Upload complete. Added: {added}, Skipped: {skipped}",
+        "added": added,
+        "skipped": skipped,
+        "errors": errors,
+        "department": department,
+        "year": year
+    }
+
 # ===================== DASHBOARD STATS =====================
 
 @api_router.get("/stats")
