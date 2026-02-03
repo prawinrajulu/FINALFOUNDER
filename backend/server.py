@@ -92,6 +92,15 @@ class ClaimRequest(BaseModel):
     item_id: str
     message: Optional[str] = ""
 
+class AIClaimRequest(BaseModel):
+    item_id: str
+    product_type: str
+    description: str
+    identification_marks: str
+    lost_location: str
+    approximate_date: str
+    proof_image: Optional[str] = None  # Base64 or URL
+
 class MessageCreate(BaseModel):
     recipient_id: str
     recipient_type: str  # "student" or "admin"
