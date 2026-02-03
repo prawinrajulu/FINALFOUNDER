@@ -189,6 +189,9 @@ async def startup_event():
         }
         await db.admins.insert_one(super_admin)
         logging.info("Super admin created with default credentials")
+    
+    # Auto-migrate existing students to folder structure
+    await auto_migrate_students_to_folders()
 
 # ===================== AUTH ROUTES =====================
 
