@@ -433,7 +433,9 @@ const AdminStudents = () => {
                 <CardHeader>
                   <CardTitle>Folder Details</CardTitle>
                   <CardDescription>
-                    {folderDetails ? `Year ${folderDetails.name}` : 'Select a year folder'}
+                    {folderDetails 
+                      ? `${folderDetails.department_name || 'Unknown'}, Year ${folderDetails.name}` 
+                      : 'Select a year folder'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
