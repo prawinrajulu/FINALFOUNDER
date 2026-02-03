@@ -1249,11 +1249,55 @@ async def send_message(data: MessageCreate, current_user: dict = Depends(require
         "content": data.content,
         "item_id": data.item_id,
         "is_read": False,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "student_reaction": None,  # NEW: null, "thumbs_up", "thumbs_down"
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": None
     }
     
     await db.messages.insert_one(message)
     return {"message": "Message sent", "message_id": message["id"]}
+
+@api_router.put("/messages/{message_id}")
+async def edit_message(message_id: str, content: str, current_user: dict = Depends(require_admin)):
+    """Admin can edit their own messages"""
+    message = await db.messages.find_one({"id": message_id, "sender_id": current_user["sub"]})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found or you don't have permission")
+    
+    await db.messages.update_one(
+        {"id": message_id},
+        {"$set": {
+            "content": content,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    return {"message": "Message updated successfully"}
+
+@api_router.delete("/messages/{message_id}")
+async def delete_message(message_id: str, current_user: dict = Depends(require_admin)):
+    """Admin can delete their own messages"""
+    message = await db.messages.find_one({"id": message_id, "sender_id": current_user["sub"]})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found or you don't have permission")
+    
+    await db.messages.delete_one({"id": message_id})
+    return {"message": "Message deleted successfully"}
+
+@api_router.post("/messages/{message_id}/react")
+async def react_to_message(message_id: str, reaction: str, current_user: dict = Depends(require_student)):
+    """Student can react to admin messages with thumbs up or thumbs down"""
+    if reaction not in ["thumbs_up", "thumbs_down"]:
+        raise HTTPException(status_code=400, detail="Invalid reaction. Use 'thumbs_up' or 'thumbs_down'")
+    
+    message = await db.messages.find_one({"id": message_id, "recipient_id": current_user["sub"]})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    await db.messages.update_one(
+        {"id": message_id},
+        {"$set": {"student_reaction": reaction}}
+    )
+    return {"message": "Reaction added successfully", "reaction": reaction}
 
 @api_router.get("/messages")
 async def get_messages(current_user: dict = Depends(get_current_user)):
