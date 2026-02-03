@@ -1467,6 +1467,15 @@ async def get_folder(folder_id: str, current_user: dict = Depends(require_super_
         raise HTTPException(status_code=404, detail="Folder not found")
     
     if folder["type"] == "year":
+        # Get parent department info
+        if folder.get("parent_id"):
+            parent_dept = await db.folders.find_one(
+                {"id": folder["parent_id"], "type": "department"},
+                {"_id": 0, "name": 1}
+            )
+            if parent_dept:
+                folder["department_name"] = parent_dept["name"]
+        
         # Get students in this year folder
         students = await db.students.find(
             {"year_folder_id": folder_id},
@@ -1479,7 +1488,7 @@ async def get_folder(folder_id: str, current_user: dict = Depends(require_super_
         uploads = await db.excel_uploads.find(
             {"year_folder_id": folder_id},
             {"_id": 0}
-        ).sort("uploaded_at", -1).to_list(100)
+        }).sort("uploaded_at", -1).to_list(100)
         folder["uploads"] = uploads
     
     return folder
