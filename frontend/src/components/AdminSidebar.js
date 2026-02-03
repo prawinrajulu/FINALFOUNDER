@@ -29,6 +29,7 @@ const navItems = [
 
 const superAdminItems = [
   { to: '/admin/manage-admins', icon: UserCog, label: 'Manage Admins' },
+  { to: '/admin/folders', icon: Folder, label: 'Folder Management' },
 ];
 
 export const AdminSidebar = () => {
