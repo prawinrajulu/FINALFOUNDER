@@ -255,8 +255,10 @@ const AIClaimChat = ({ itemId, onClose }) => {
             {currentQuestion.type === 'file' && (
               <div className="space-y-3">
                 <div 
-                  className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 transition"
-                  onClick={() => document.getElementById('proof-upload').click()}
+                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition ${
+                    noProofChecked ? 'border-slate-200 bg-slate-50 opacity-50 cursor-not-allowed' : 'border-slate-300 hover:border-purple-400'
+                  }`}
+                  onClick={() => !noProofChecked && document.getElementById('proof-upload').click()}
                 >
                   {proofImage ? (
                     <div>
@@ -278,7 +280,36 @@ const AIClaimChat = ({ itemId, onClose }) => {
                   accept="image/*"
                   onChange={handleFileChange}
                   className="hidden"
+                  disabled={noProofChecked}
                 />
+                
+                {/* No Proof Checkbox - Highlighted */}
+                <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={noProofChecked}
+                      onChange={(e) => {
+                        setNoProofChecked(e.target.checked);
+                        if (e.target.checked) {
+                          setProofImage(null);
+                          setAnswers({...answers, proof_image: 'no_proof'});
+                        } else {
+                          const newAnswers = {...answers};
+                          delete newAnswers.proof_image;
+                          setAnswers(newAnswers);
+                        }
+                      }}
+                      className="w-5 h-5 text-yellow-600 border-yellow-400 rounded focus:ring-yellow-500"
+                    />
+                    <span className="text-sm font-semibold text-yellow-900">
+                      ⚠️ I don't have any proof image
+                    </span>
+                  </label>
+                  <p className="text-xs text-yellow-700 mt-2 ml-8">
+                    Check this if you don't have any photo as proof
+                  </p>
+                </div>
               </div>
             )}
           </div>
