@@ -27,7 +27,6 @@ import AdminMessages from "./pages/AdminMessages";
 import AdminDeletedItems from "./pages/AdminDeletedItems";
 import AdminManageAdmins from "./pages/AdminManageAdmins";
 import AdminSettings from "./pages/AdminSettings";
-import AdminFolderManagement from "./pages/AdminFolderManagement";
 
 // Protected Route Components
 const StudentRoute = ({ children }) => {
@@ -146,14 +145,6 @@ function AppRoutes() {
           element={
             <SuperAdminRoute>
               <AdminManageAdmins />
-            </SuperAdminRoute>
-          }
-        />
-        <Route
-          path="folders"
-          element={
-            <SuperAdminRoute>
-              <AdminFolderManagement />
             </SuperAdminRoute>
           }
         />
