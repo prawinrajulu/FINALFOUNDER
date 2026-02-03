@@ -28,6 +28,7 @@ import AdminMessages from "./pages/AdminMessages";
 import AdminDeletedItems from "./pages/AdminDeletedItems";
 import AdminManageAdmins from "./pages/AdminManageAdmins";
 import AdminSettings from "./pages/AdminSettings";
+import AdminClaimRequests from "./pages/AdminClaimRequests";
 
 // Protected Route Components
 const StudentRoute = ({ children }) => {
@@ -138,6 +139,7 @@ function AppRoutes() {
         <Route path="found-items" element={<AdminFoundItems />} />
         <Route path="ai-matches" element={<AdminAIMatches />} />
         <Route path="claims" element={<AdminClaims />} />
+        <Route path="claim-requests" element={<AdminClaimRequests />} />
         <Route path="students" element={<AdminStudents />} />
         <Route path="messages" element={<AdminMessages />} />
         <Route path="deleted-items" element={<AdminDeletedItems />} />
