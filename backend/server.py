@@ -317,8 +317,9 @@ async def get_lobby_items(item_type: Optional[str] = None):
                 "department": "Unknown",
                 "year": "N/A"
             }
-        # Remove sensitive fields
+        # Remove sensitive fields (including secret_message)
         item.pop("student_id", None)
+        item.pop("secret_message", None)  # NEW: Never expose secret message publicly
     
     return items
 
