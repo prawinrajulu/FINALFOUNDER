@@ -905,6 +905,149 @@ async def create_claim(data: ClaimRequest, current_user: dict = Depends(require_
     await db.claims.insert_one(claim)
     return {"message": "Claim submitted successfully", "claim_id": claim["id"]}
 
+@api_router.post("/claims/ai-powered")
+async def create_ai_powered_claim(
+    item_id: str = Form(...),
+    product_type: str = Form(...),
+    description: str = Form(...),
+    identification_marks: str = Form(...),
+    lost_location: str = Form(...),
+    approximate_date: str = Form(...),
+    proof_image: UploadFile = File(None),
+    current_user: dict = Depends(require_student)
+):
+    """Create a claim with AI similarity analysis"""
+    # Get the item being claimed
+    item = await db.items.find_one({"id": item_id, "is_deleted": False})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    # Check for existing pending claim
+    existing_claim = await db.claims.find_one({
+        "item_id": item_id,
+        "claimant_id": current_user["sub"],
+        "status": {"$in": ["pending", "under_review"]}
+    })
+    if existing_claim:
+        raise HTTPException(status_code=400, detail="You already have a pending claim for this item")
+    
+    # Handle proof image upload
+    proof_image_url = None
+    if proof_image:
+        if not proof_image.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Only image files allowed for proof")
+        
+        proof_id = str(uuid.uuid4())
+        ext = proof_image.filename.split(".")[-1] if "." in proof_image.filename else "jpg"
+        proof_filename = f"claim_proof_{proof_id}.{ext}"
+        proof_path = ITEMS_DIR / proof_filename
+        
+        with open(proof_path, "wb") as f:
+            content = await proof_image.read()
+            f.write(content)
+        
+        proof_image_url = f"/uploads/items/{proof_filename}"
+    
+    # Prepare data for AI analysis
+    claim_data = {
+        "product_type": product_type,
+        "description": description,
+        "identification_marks": identification_marks,
+        "lost_location": lost_location,
+        "approximate_date": approximate_date
+    }
+    
+    item_data = {
+        "item_keyword": item.get("item_keyword", ""),
+        "description": item.get("description", ""),
+        "location": item.get("location", ""),
+        "approximate_time": item.get("approximate_time", ""),
+        "created_date": item.get("created_date", "")
+    }
+    
+    # Perform AI similarity analysis
+    ai_analysis = {"match_percentage": 0, "reasoning": "AI analysis not available"}
+    
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        
+        api_key = os.environ.get("EMERGENT_LLM_KEY")
+        if api_key:
+            chat = LlmChat(
+                api_key=api_key,
+                session_id=f"claim_analysis_{item_id}_{current_user['sub']}_{datetime.now().timestamp()}",
+                system_message="""You are an AI assistant analyzing claim similarity for a campus lost & found system.
+                Compare the student's claim details with the found item details.
+                Analyze: product type, description match, identification marks, location proximity, date/time correlation.
+                Return ONLY a valid JSON object with:
+                {
+                  "match_percentage": <number 0-100>,
+                  "reasoning": "<brief explanation of similarity analysis>"
+                }
+                Be strict. Only give high scores (>80) for strong matches."""
+            )
+            
+            prompt = f"""Analyze similarity between this claim and found item:
+
+FOUND ITEM (Already Reported):
+- Type: {item_data['item_keyword']}
+- Description: {item_data['description']}
+- Location: {item_data['location']}
+- Time: {item_data['approximate_time']}
+- Date: {item_data['created_date']}
+
+STUDENT CLAIM:
+- Product Type: {claim_data['product_type']}
+- Description: {claim_data['description']}
+- Identification Marks: {claim_data['identification_marks']}
+- Lost Location: {claim_data['lost_location']}
+- Approximate Date: {claim_data['approximate_date']}
+
+Return JSON with match_percentage (0-100) and reasoning."""
+
+            response = chat.send_user_message(UserMessage(content=prompt))
+            response_text = response.content.strip()
+            
+            # Extract JSON from response
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].split("```")[0].strip()
+            
+            ai_analysis = json.loads(response_text)
+            logging.info(f"AI claim analysis: {ai_analysis}")
+    
+    except Exception as e:
+        logging.error(f"AI analysis failed: {str(e)}")
+        ai_analysis = {
+            "match_percentage": 0,
+            "reasoning": f"AI analysis unavailable: {str(e)}"
+        }
+    
+    # Create claim with AI analysis
+    claim = {
+        "id": str(uuid.uuid4()),
+        "item_id": item_id,
+        "claimant_id": current_user["sub"],
+        "claim_type": "ai_powered",
+        "claim_data": claim_data,
+        "proof_image_url": proof_image_url,
+        "ai_analysis": ai_analysis,
+        "status": "pending",
+        "verification_questions": [],
+        "verification_answers": [],
+        "admin_notes": "",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.claims.insert_one(claim)
+    
+    return {
+        "message": "AI-powered claim submitted successfully",
+        "claim_id": claim["id"],
+        "ai_analysis": ai_analysis
+    }
+
 @api_router.get("/claims")
 async def get_claims(status: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     query = {}
