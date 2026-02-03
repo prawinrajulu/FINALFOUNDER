@@ -570,8 +570,10 @@ async def upload_profile_picture(file: UploadFile = File(...), current_user: dic
 @api_router.post("/items")
 async def create_item(
     item_type: str = Form(...),
+    item_keyword: str = Form(...),
     description: str = Form(...),
     location: str = Form(...),
+    approximate_time: str = Form(...),
     image: UploadFile = File(...),
     current_user: dict = Depends(require_student)
 ):
@@ -596,8 +598,10 @@ async def create_item(
     item = {
         "id": item_id,
         "item_type": item_type,
+        "item_keyword": item_keyword,
         "description": description,
         "location": location,
+        "approximate_time": approximate_time,
         "image_url": f"/uploads/items/{image_filename}",
         "student_id": current_user["sub"],
         "status": "active",  # active, claimed, resolved
