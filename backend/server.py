@@ -79,8 +79,10 @@ class AdminPasswordChange(BaseModel):
 
 class ItemCreate(BaseModel):
     item_type: str  # "lost" or "found"
+    item_keyword: str  # Phone, Laptop, Wallet, etc.
     description: str
     location: str
+    approximate_time: str  # Morning, Afternoon, Evening, Night
 
 class ItemLike(BaseModel):
     item_id: str
@@ -114,6 +116,14 @@ class AdminNote(BaseModel):
 class ClaimDecision(BaseModel):
     status: str  # "approved" or "rejected"
     notes: Optional[str] = ""
+
+class FolderCreate(BaseModel):
+    name: str
+    type: str  # "department" or "year"
+    parent_id: Optional[str] = None
+
+class FolderRename(BaseModel):
+    name: str
 
 # ===================== HELPER FUNCTIONS =====================
 
