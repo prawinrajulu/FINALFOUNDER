@@ -36,7 +36,8 @@ const ReportFoundPage = () => {
     custom_keyword: '',
     description: '',
     location: '',
-    approximate_time: ''
+    approximate_time: '',
+    secret_message: ''  // NEW: Secret identification message
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -61,13 +62,18 @@ const ReportFoundPage = () => {
       ? formData.custom_keyword 
       : formData.item_keyword;
 
-    if (!finalKeyword || !formData.description || !formData.location || !formData.approximate_time || !image) {
-      toast.error('Please fill all required fields and upload an image');
+    if (!finalKeyword || !formData.description || !formData.location || !formData.approximate_time || !formData.secret_message || !image) {
+      toast.error('Please fill all required fields including Secret Identification Message and upload an image');
       return;
     }
 
     if (formData.item_keyword === 'Others' && !formData.custom_keyword.trim()) {
       toast.error('Please specify the item type');
+      return;
+    }
+
+    if (!formData.secret_message.trim()) {
+      toast.error('Secret Identification Message is mandatory');
       return;
     }
 
@@ -79,6 +85,7 @@ const ReportFoundPage = () => {
       data.append('description', formData.description);
       data.append('location', formData.location);
       data.append('approximate_time', formData.approximate_time);
+      data.append('secret_message', formData.secret_message);
       data.append('image', image);
 
       await itemsAPI.createItem(data);
