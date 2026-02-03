@@ -282,6 +282,47 @@ async def startup_event():
     # Auto-migrate existing students to folder structure
     await auto_migrate_students_to_folders()
 
+# ===================== PUBLIC LOBBY ENDPOINTS =====================
+
+@api_router.get("/lobby/items")
+async def get_lobby_items(item_type: Optional[str] = None):
+    """Public endpoint - shows all active items with safe student info"""
+    query = {"is_deleted": False, "status": "active"}
+    
+    if item_type and item_type in ["lost", "found"]:
+        query["item_type"] = item_type
+    
+    items = await db.items.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    
+    # Add safe student info (no roll number, phone, email)
+    for item in items:
+        student = await db.students.find_one(
+            {"id": item["student_id"]},
+            {"_id": 0, "full_name": 1, "department": 1, "year": 1}
+        )
+        if student:
+            item["student"] = student
+        else:
+            item["student"] = {
+                "full_name": "Anonymous",
+                "department": "Unknown",
+                "year": "N/A"
+            }
+        # Remove sensitive fields
+        item.pop("student_id", None)
+    
+    return items
+
+@api_router.get("/lobby/items/lost")
+async def get_lobby_lost_items():
+    """Public endpoint - shows lost items only"""
+    return await get_lobby_items(item_type="lost")
+
+@api_router.get("/lobby/items/found")
+async def get_lobby_found_items():
+    """Public endpoint - shows found items only"""
+    return await get_lobby_items(item_type="found")
+
 # ===================== AUTH ROUTES =====================
 
 @api_router.post("/auth/student/login")
