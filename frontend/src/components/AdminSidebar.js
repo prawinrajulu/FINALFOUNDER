@@ -96,12 +96,17 @@ export const AdminSidebar = () => {
             to={item.to}
             end={item.exact}
             className={({ isActive }) =>
-              `sidebar-link ${isActive ? 'active' : ''}`
+              `sidebar-link ${isActive ? 'active' : ''} ${item.highlight ? 'bg-purple-900/20' : ''}`
             }
             data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
           >
             <item.icon className="w-5 h-5 mr-3" />
-            <span>{item.label}</span>
+            <span className="flex-1">{item.label}</span>
+            {item.badge && pendingCount > 0 && (
+              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                {pendingCount}
+              </span>
+            )}
           </NavLink>
         ))}
 
