@@ -11,7 +11,7 @@ from datetime import datetime
 
 def test_core_ai_verification():
     """Test core AI verification features"""
-    base_url = "https://codecheck-24.preview.emergentagent.com/api"
+    base_url = "https://git-inspector-12.preview.emergentagent.com/api"
     
     print("🚀 Testing Core AI Claim Verification System")
     print("="*60)

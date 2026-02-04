@@ -9,7 +9,7 @@ import sys
 
 def test_item_status_validation():
     """Test that claimed/archived items cannot be claimed again"""
-    base_url = "https://codecheck-24.preview.emergentagent.com/api"
+    base_url = "https://git-inspector-12.preview.emergentagent.com/api"
     
     print("🚀 Testing Item Status Validation for AI Claims")
     print("="*60)

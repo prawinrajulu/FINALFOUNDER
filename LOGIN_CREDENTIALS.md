@@ -6,7 +6,7 @@
 
 ## How to Login:
 
-1. Go to: https://codecheck-24.preview.emergentagent.com/admin/login
+1. Go to: https://git-inspector-12.preview.emergentagent.com/admin/login
 
 2. In the Username field, type exactly (without quotes):
    ```

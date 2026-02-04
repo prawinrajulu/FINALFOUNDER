@@ -13,7 +13,7 @@ Username: superadmin
 Password: admin123
 ```
 
-**Login URL:** https://codecheck-24.preview.emergentagent.com/admin/login
+**Login URL:** https://git-inspector-12.preview.emergentagent.com/admin/login
 
 ---
 
