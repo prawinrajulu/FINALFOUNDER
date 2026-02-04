@@ -1578,15 +1578,23 @@ Return the JSON analysis."""
     
     except Exception as e:
         logging.error(f"AI analysis failed: {str(e)}")
+        # AUDIT FIX: Safe fallback with INSUFFICIENT confidence (not LOW)
         ai_analysis = {
-            "confidence_band": "LOW",
-            "reasoning": "AI analysis could not be completed",
+            "confidence_band": "INSUFFICIENT",
+            "reasoning": "AI analysis could not be completed. Manual review required.",
+            "what_matched": [],
+            "what_partially_matched": [],
+            "what_did_not_match": [],
+            "missing_information": ["AI analysis unavailable - please verify all details manually"],
             "inconsistencies": [],
-            "advisory_note": "⚠️ This is ADVISORY ONLY. The admin will review and make the final decision."
+            "input_quality_flags": claim_data['description_quality']['flags'] + claim_data['marks_quality']['flags'],
+            "recommendation_for_admin": "AI analysis failed. Please conduct full manual verification.",
+            "advisory_note": "⚠️ AI analysis failed. Admin must verify manually."
         }
         verification_questions = [
             "Can you describe any unique features or marks on the item?",
-            "Where exactly did you lose this item?"
+            "Where exactly did you lose this item?",
+            "What was in the item if it's a bag/wallet?"
         ]
     
     # Create claim with AI advisory analysis
@@ -1616,6 +1624,7 @@ Return the JSON analysis."""
         "claim_id": claim["id"],
         "user_id": current_user["sub"],
         "ai_confidence": ai_analysis["confidence_band"],
+        "ai_failed": ai_analysis["confidence_band"] == "INSUFFICIENT" and "failed" in ai_analysis.get("reasoning", "").lower(),
         "timestamp": datetime.now(timezone.utc).isoformat()
     })
     
