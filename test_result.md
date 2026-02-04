@@ -219,27 +219,33 @@ backend:
 
   - task: "Image optional for items"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Item creation now accepts optional image"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Item creation works without image - successfully created both LOST and FOUND items with text-only descriptions"
 
   - task: "Rate limiting on claims"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added 5 claims/day and 3 found-responses/day limits"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Rate limiting implementation verified in code - claims limited to 5/day, found-responses limited to 3/day per user"
 
 frontend:
   - task: "Landing page (login options only)"
