@@ -848,11 +848,9 @@ backend:
 
 test_plan:
   current_focus:
-    - "Campus Feed - Post creation (Admin)"
-    - "Campus Feed - Like and comment (Student)"
-    - "AI Matching - Should show non-zero percentages"
-    - "Claim visibility - Owner badge instead of claim button"
-    - "Student logout button"
+    - "Campus Feed - Comment Likes API (NEW)"
+    - "Campus Feed - Admin Commenting (NEW)" 
+    - "Campus Feed - Comments Enrichment (NEW)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
