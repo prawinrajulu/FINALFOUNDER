@@ -2735,7 +2735,7 @@ async def create_feed_post(
 
 @api_router.get("/feed/posts")
 async def get_feed_posts(current_user: dict = Depends(get_current_user)):
-    """Get all feed posts - accessible to all authenticated users"""
+    """Get all feed posts - accessible to all authenticated users (students, admins, super admins)"""
     posts = await db.feed_posts.find(
         {"is_deleted": False},
         {"_id": 0}
@@ -2746,29 +2746,51 @@ async def get_feed_posts(current_user: dict = Depends(get_current_user)):
     # Enrich posts with like status and comment count
     for post in posts:
         post["is_liked_by_me"] = user_id in post.get("liked_by", [])
-        post["comment_count"] = len(post.get("comments", []))
         
-        # Get recent comments with author info
-        comments = post.get("comments", [])[:5]
+        # Get ALL non-deleted comments with author info - FIX #2: Visible to ALL users
+        all_comments = post.get("comments", [])
         enriched_comments = []
-        for comment in comments:
+        
+        for comment in all_comments:
             if not comment.get("is_deleted"):
-                # Get commenter info
-                commenter = await db.students.find_one(
-                    {"id": comment["author_id"]},
-                    {"_id": 0, "full_name": 1, "department": 1, "year": 1}
-                )
+                # Get commenter info - check both students and admins
+                commenter = None
+                if comment.get("is_admin_comment"):
+                    # Get admin info
+                    admin = await db.admins.find_one(
+                        {"id": comment["author_id"]},
+                        {"_id": 0, "full_name": 1, "role": 1}
+                    )
+                    if admin:
+                        commenter = {
+                            "full_name": admin.get("full_name", "Admin"),
+                            "is_admin": True,
+                            "role": admin.get("role", "admin")
+                        }
+                else:
+                    # Get student info - FIX #5: Only safe info (name, dept, year)
+                    student = await db.students.find_one(
+                        {"id": comment["author_id"]},
+                        {"_id": 0, "full_name": 1, "department": 1, "year": 1}
+                    )
+                    if student:
+                        commenter = student
+                
                 enriched_comments.append({
                     **comment,
                     "author": commenter or {"full_name": "Anonymous"}
                 })
-        post["recent_comments"] = enriched_comments
+        
+        post["comments"] = enriched_comments
+        post["comment_count"] = len(enriched_comments)
+        # Also keep recent_comments for backward compatibility
+        post["recent_comments"] = enriched_comments[:5]
     
     return posts
 
 @api_router.get("/feed/posts/{post_id}")
 async def get_feed_post(post_id: str, current_user: dict = Depends(get_current_user)):
-    """Get single feed post with all comments"""
+    """Get single feed post with all comments - accessible to ALL authenticated users"""
     post = await db.feed_posts.find_one({"id": post_id, "is_deleted": False}, {"_id": 0})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -2776,19 +2798,37 @@ async def get_feed_post(post_id: str, current_user: dict = Depends(get_current_u
     user_id = current_user.get("sub")
     post["is_liked_by_me"] = user_id in post.get("liked_by", [])
     
-    # Get all comments with author info
+    # Get all comments with author info - FIX #2: Visible to ALL users
     enriched_comments = []
     for comment in post.get("comments", []):
         if not comment.get("is_deleted"):
-            commenter = await db.students.find_one(
-                {"id": comment["author_id"]},
-                {"_id": 0, "full_name": 1, "department": 1, "year": 1}
-            )
+            commenter = None
+            if comment.get("is_admin_comment"):
+                admin = await db.admins.find_one(
+                    {"id": comment["author_id"]},
+                    {"_id": 0, "full_name": 1, "role": 1}
+                )
+                if admin:
+                    commenter = {
+                        "full_name": admin.get("full_name", "Admin"),
+                        "is_admin": True,
+                        "role": admin.get("role", "admin")
+                    }
+            else:
+                student = await db.students.find_one(
+                    {"id": comment["author_id"]},
+                    {"_id": 0, "full_name": 1, "department": 1, "year": 1}
+                )
+                if student:
+                    commenter = student
+            
             enriched_comments.append({
                 **comment,
                 "author": commenter or {"full_name": "Anonymous"}
             })
+    
     post["comments"] = enriched_comments
+    post["comment_count"] = len(enriched_comments)
     
     return post
 
