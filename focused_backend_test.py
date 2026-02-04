@@ -257,7 +257,9 @@ class FocusedTester:
             # Both 400 and 422 indicate validation is working
             if response.status_code in [400, 422]:
                 error_detail = response.json().get("detail", "")
-                if "reason" in error_detail.lower() or "field required" in error_detail.lower():
+                # Handle both string and list error formats
+                error_str = str(error_detail).lower() if error_detail else ""
+                if "reason" in error_str or "field required" in error_str:
                     self.log_test("Claim Decision (No Reason - Should Fail)", True,
                                  f"Validation working: {error_detail}")
                 else:
@@ -268,7 +270,7 @@ class FocusedTester:
                 decision_data = {"status": "approved", "reason": "OK"}
                 response2 = requests.post(f"{self.base_url}/claims/{dummy_claim_id}/decision",
                                         json=decision_data, headers=headers, timeout=10)
-                if response2.status_code in [400, 422] and "10 characters" in response2.json().get("detail", ""):
+                if response2.status_code in [400, 422] and "10 characters" in str(response2.json().get("detail", "")):
                     self.log_test("Claim Decision (No Reason - Should Fail)", True,
                                  "Validation happens before claim lookup (correct)")
                 else:
