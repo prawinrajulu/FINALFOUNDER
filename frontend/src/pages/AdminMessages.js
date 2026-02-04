@@ -245,14 +245,20 @@ const AdminMessages = () => {
                           {msg.content}
                         </p>
 
-                        {/* Message Status & Reactions */}
+                        {/* Message Status & Reactions - FIX #4: Show seen_at timestamp */}
                         <div className="flex items-center gap-4 text-xs">
-                          {/* Seen Status */}
+                          {/* Seen Status with Timestamp */}
                           <div className="flex items-center gap-1">
                             {msg.is_read ? (
                               <>
                                 <Eye className="w-3.5 h-3.5 text-green-600" />
-                                <span className="text-green-600 font-medium">Seen</span>
+                                <span className="text-green-600 font-medium">
+                                  Seen {msg.seen_at && (
+                                    <span className="font-normal">
+                                      • {format(new Date(msg.seen_at), 'MMM d, h:mm a')}
+                                    </span>
+                                  )}
+                                </span>
                               </>
                             ) : (
                               <>
