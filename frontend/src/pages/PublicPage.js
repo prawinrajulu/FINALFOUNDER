@@ -71,11 +71,18 @@ const PublicPage = () => {
   };
 
   const ItemCard = ({ item }) => {
-    // SEMANTIC FIX: Different actions for LOST vs FOUND items
+    // FIX A: Check ownership - owners see different UI than other users
+    const isOwner = item.is_owner === true;
     const isLostItem = item.item_type === 'lost';
     const isFoundItem = item.item_type === 'found';
     
     const handleAction = () => {
+      if (isOwner) {
+        // Owner navigates to their items page
+        navigate('/student/my-items');
+        return;
+      }
+      
       if (isFoundItem) {
         // FOUND items → Claim (ownership verification)
         navigate(`/student/claim/${item.id}`);
@@ -100,12 +107,25 @@ const PublicPage = () => {
               <span className="text-xs text-slate-400 absolute bottom-2">No image</span>
             </div>
           )}
+          
+          {/* Item Type Badge */}
           <div className="absolute top-3 left-3">
             <Badge className={isLostItem ? 'bg-orange-500' : 'bg-emerald-500'}>
               {isLostItem ? 'Lost' : 'Found'}
             </Badge>
           </div>
-          {item.status && item.status !== 'reported' && (
+          
+          {/* FIX A: Owner Badge - clearly shows user owns this item */}
+          {isOwner && (
+            <div className="absolute top-3 right-3">
+              <Badge className="bg-purple-500 text-white">
+                Your Item
+              </Badge>
+            </div>
+          )}
+          
+          {/* Status Badge (for non-owners) */}
+          {!isOwner && item.status && item.status !== 'reported' && (
             <div className="absolute top-3 right-3">
               <Badge variant="secondary" className={`
                 ${item.status === 'found_reported' ? 'bg-blue-100 text-blue-700' : ''}
@@ -115,7 +135,9 @@ const PublicPage = () => {
               </Badge>
             </div>
           )}
-          {item.item_keyword && item.status === 'reported' && (
+          
+          {/* Item Keyword Badge (for non-owners with reported status) */}
+          {!isOwner && item.item_keyword && item.status === 'reported' && (
             <div className="absolute top-3 right-3">
               <Badge variant="secondary" className="bg-white/90 backdrop-blur">
                 {item.item_keyword}
@@ -156,7 +178,9 @@ const PublicPage = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm">
                 <User2 className="w-4 h-4 text-slate-400" />
-                <span className="font-medium text-slate-700">{item.student?.full_name || 'Anonymous'}</span>
+                <span className="font-medium text-slate-700">
+                  {isOwner ? 'You' : item.student?.full_name || 'Anonymous'}
+                </span>
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-600">
                 <div className="flex items-center gap-1">
@@ -169,35 +193,56 @@ const PublicPage = () => {
             </div>
           </div>
 
-          {/* SEMANTIC ACTION BUTTONS */}
+          {/* FIX A: ACTION BUTTONS - Different for owners vs non-owners */}
           {isAuthenticated && role === 'student' && (
             <div className="pt-3 border-t border-slate-100">
-              {isFoundItem ? (
-                /* FOUND items → Claim (I am the owner) */
-                <Button 
-                  onClick={handleAction}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  size="sm"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Claim This Item
-                </Button>
+              {isOwner ? (
+                /* OWNER VIEW - No claim option, show management options */
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-purple-600 bg-purple-50 px-3 py-2 rounded-lg">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="font-medium">You reported this item</span>
+                  </div>
+                  <Button 
+                    onClick={() => navigate('/student/my-items')}
+                    variant="outline"
+                    className="w-full"
+                    size="sm"
+                  >
+                    View in My Items
+                  </Button>
+                </div>
+              ) : isFoundItem ? (
+                /* NON-OWNER: FOUND items → Claim (I am the owner) */
+                <div>
+                  <Button 
+                    onClick={handleAction}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="sm"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Claim This Item
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-2 text-center">
+                    Verify ownership to claim this item
+                  </p>
+                </div>
               ) : (
-                /* LOST items → I Found This */
-                <Button 
-                  onClick={handleAction}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
-                  size="sm"
-                >
-                  <Hand className="w-4 h-4 mr-2" />
-                  I Found This Item
-                </Button>
+                /* NON-OWNER: LOST items → I Found This */
+                <div>
+                  <Button 
+                    onClick={handleAction}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                    size="sm"
+                  >
+                    <Hand className="w-4 h-4 mr-2" />
+                    I Found This Item
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-2 text-center">
+                    Help return this item to its owner
+                  </p>
+                </div>
               )}
-              <p className="text-xs text-slate-500 mt-2 text-center">
-                {isFoundItem 
-                  ? "Verify ownership to claim this item" 
-                  : "Help return this item to its owner"}
-              </p>
             </div>
           )}
           
