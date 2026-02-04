@@ -801,6 +801,51 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: Items Public API ownership flag working perfectly - Each item has is_owner boolean flag, owners see is_owner=true, non-owners see is_owner=false. Tested with multiple users and confirmed accuracy."
 
+  - task: "Campus Feed - Comment Likes API (NEW)"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added POST /api/feed/posts/{post_id}/comments/{comment_id}/like endpoint for liking/unliking comments with toggle behavior"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Comment likes API works perfectly - POST /api/feed/posts/{post_id}/comments/{comment_id}/like allows liking/unliking comments with proper toggle behavior. Returns likes count and is_liked status correctly. First like: True (count: 1), Second like: False (count: 0)"
+
+  - task: "Campus Feed - Admin Commenting (NEW)"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Modified POST /api/feed/posts/{post_id}/comments to allow both students AND admins to comment with is_admin_comment flag"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Admin commenting works perfectly - Both students and admins can comment on posts. Admin comments have is_admin_comment: true flag. Student comments have is_admin_comment: false flag. Comment creation successful for both user types."
+
+  - task: "Campus Feed - Comments Enrichment (NEW)"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced GET /api/feed/posts to include enriched comments with likes, liked_by, is_admin_comment fields and proper author info"
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Comments enrichment works perfectly - GET /api/feed/posts returns comments with all required fields (likes, liked_by, is_admin_comment). Author info includes full_name, department, year for students and full_name, role for admins. Comment structure is properly enriched and accessible to all users."
+
 test_plan:
   current_focus:
     - "Campus Feed - Post creation (Admin)"
