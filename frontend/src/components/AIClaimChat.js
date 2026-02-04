@@ -137,6 +137,22 @@ const AIClaimChat = ({ itemId, onClose }) => {
   };
 
   if (aiResult) {
+    // Get confidence band display
+    const getConfidenceBandDisplay = () => {
+      const band = aiResult.confidence_band || 'LOW';
+      switch (band.toUpperCase()) {
+        case 'HIGH':
+          return { color: 'text-green-600 bg-green-100', label: 'HIGH', icon: '✅' };
+        case 'MEDIUM':
+          return { color: 'text-amber-600 bg-amber-100', label: 'MEDIUM', icon: '⚠️' };
+        case 'LOW':
+        default:
+          return { color: 'text-red-600 bg-red-100', label: 'LOW', icon: '❌' };
+      }
+    };
+    
+    const confidenceDisplay = getConfidenceBandDisplay();
+    
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
@@ -145,24 +161,53 @@ const AIClaimChat = ({ itemId, onClose }) => {
               <Sparkles className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <CardTitle>AI Analysis Complete</CardTitle>
-              <p className="text-sm text-slate-600 mt-1">Your claim has been analyzed</p>
+              <CardTitle>Claim Submitted for Review</CardTitle>
+              <p className="text-sm text-slate-600 mt-1">AI analysis is advisory only</p>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* DESIGN FIX: Show confidence band instead of percentage */}
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6">
             <div className="text-center mb-4">
-              <div className="text-6xl font-bold text-purple-600">
-                {aiResult.match_percentage}%
+              <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-2xl font-bold ${confidenceDisplay.color}`}>
+                <span>{confidenceDisplay.icon}</span>
+                <span>{confidenceDisplay.label} CONFIDENCE</span>
               </div>
-              <p className="text-sm text-slate-600 mt-2">Match Confidence</p>
+              <p className="text-sm text-slate-500 mt-2">
+                ⚠️ This is an AI advisory analysis only
+              </p>
             </div>
             
-            <div className="bg-white rounded-lg p-4">
-              <p className="text-sm font-semibold text-slate-700 mb-2">AI Reasoning:</p>
-              <p className="text-sm text-slate-600">{aiResult.reasoning}</p>
+            <div className="bg-white rounded-lg p-4 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-2">AI Advisory Notes:</p>
+                <p className="text-sm text-slate-600">{aiResult.reasoning}</p>
+              </div>
+              
+              {aiResult.inconsistencies && aiResult.inconsistencies.length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-sm font-semibold text-amber-700 mb-2">⚠️ Detected Inconsistencies:</p>
+                  <ul className="list-disc list-inside text-sm text-amber-600 space-y-1">
+                    {aiResult.inconsistencies.map((issue, i) => (
+                      <li key={i}>{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Important disclaimer */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-sm text-amber-800 font-medium mb-2">
+              ⚠️ Important: AI Does NOT Make Decisions
+            </p>
+            <p className="text-xs text-amber-700">
+              The AI analysis is for advisory purposes only. An admin will review your claim 
+              and make the final decision. The confidence band helps guide, but does not 
+              determine, the outcome of your claim.
+            </p>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
