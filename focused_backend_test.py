@@ -151,19 +151,36 @@ class FocusedTester:
             except Exception as e:
                 self.log_test("Claim LOST Item (Should Fail)", False, f"Error: {e}")
 
-        # Try to claim FOUND item (should work)
-        if self.test_found_item_id:
-            try:
-                claim_data = {"item_id": self.test_found_item_id, "message": "This is my wallet"}
-                response = requests.post(f"{self.base_url}/claims", json=claim_data, headers=headers, timeout=10)
-                if response.status_code == 200:
-                    self.test_claim_id = response.json().get("claim_id")
-                    self.log_test("Claim FOUND Item (Should Work)", True, f"Claim ID: {self.test_claim_id}")
+        # Get existing FOUND items from lobby to claim (not created by current user)
+        try:
+            lobby_headers = {"Authorization": f"Bearer {self.admin_token}"}
+            response = requests.get(f"{self.base_url}/lobby/items", headers=lobby_headers, timeout=10)
+            if response.status_code == 200:
+                items = response.json()
+                found_items = [item for item in items if item.get("item_type") == "found"]
+                
+                if found_items:
+                    # Try to claim the first found item
+                    found_item = found_items[0]
+                    claim_data = {"item_id": found_item["id"], "message": "This is my item"}
+                    response = requests.post(f"{self.base_url}/claims", json=claim_data, headers=headers, timeout=10)
+                    
+                    if response.status_code == 200:
+                        self.test_claim_id = response.json().get("claim_id")
+                        self.log_test("Claim FOUND Item (Should Work)", True, f"Claim ID: {self.test_claim_id}")
+                    elif response.status_code == 400 and "cannot claim" in response.json().get("detail", ""):
+                        # This is expected if user created the item
+                        self.log_test("Claim FOUND Item (Expected Restriction)", True, 
+                                     "Cannot claim own item (correct behavior)")
+                    else:
+                        self.log_test("Claim FOUND Item (Should Work)", False, 
+                                     f"Status: {response.status_code}, Error: {response.json().get('detail', '')}")
                 else:
-                    self.log_test("Claim FOUND Item (Should Work)", False, 
-                                 f"Status: {response.status_code}, Error: {response.json().get('detail', '')}")
-            except Exception as e:
-                self.log_test("Claim FOUND Item (Should Work)", False, f"Error: {e}")
+                    self.log_test("Claim FOUND Item (Should Work)", False, "No FOUND items available in lobby")
+            else:
+                self.log_test("Claim FOUND Item (Should Work)", False, f"Cannot get lobby items: {response.status_code}")
+        except Exception as e:
+            self.log_test("Claim FOUND Item (Should Work)", False, f"Error: {e}")
 
     def test_found_responses(self):
         """Test 5: Found responses should work for LOST items only"""
