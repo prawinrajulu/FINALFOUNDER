@@ -462,8 +462,8 @@ class CampusLostFoundTester:
         """Test AI claim with vague description - should get LOW or INSUFFICIENT confidence"""
         print("\n🤖 Testing AI Claim with Vague Description (Should get LOW/INSUFFICIENT)...")
         
-        if not self.test_item_found_id:
-            self.log_result("AI Claim Vague Description", False, "No FOUND item ID available")
+        if not self.detailed_found_item_id:
+            self.log_result("AI Claim Vague Description", False, "No detailed FOUND item ID available")
             return
         
         # Use requests.post with form data for AI claim
@@ -471,7 +471,7 @@ class CampusLostFoundTester:
         headers = {'Authorization': f'Bearer {self.student_token}'}
         
         form_data = {
-            'item_id': self.test_item_found_id,
+            'item_id': self.detailed_found_item_id,
             'product_type': 'phone',  # Very generic
             'description': 'black phone',  # Very short and vague
             'identification_marks': 'black case',  # Generic
@@ -506,8 +506,8 @@ class CampusLostFoundTester:
         """Test AI claim with detailed description - should get better confidence"""
         print("\n🤖 Testing AI Claim with Detailed Description...")
         
-        if not self.test_item_found_id:
-            self.log_result("AI Claim Detailed Description", False, "No FOUND item ID available")
+        if not self.detailed_found_item_id:
+            self.log_result("AI Claim Detailed Description", False, "No detailed FOUND item ID available")
             return
         
         # Use requests.post with form data for AI claim
@@ -515,12 +515,12 @@ class CampusLostFoundTester:
         headers = {'Authorization': f'Bearer {self.student_token}'}
         
         form_data = {
-            'item_id': self.test_item_found_id,
-            'product_type': 'Brown Leather Wallet',  # Specific
-            'description': 'Brown leather wallet with cracked corner and faded university logo on front flap',  # Detailed
-            'identification_marks': 'Red silicone case with cat sticker, small dent on corner, student ID visible inside',  # Very specific
-            'lost_location': 'Main Cafeteria near the south entrance',  # Specific location
-            'approximate_date': 'Yesterday morning around 9 AM'
+            'item_id': self.detailed_found_item_id,
+            'product_type': 'iPhone 13',  # Specific
+            'description': 'Black iPhone 13 with cracked screen protector and scratch on back. Phone is in good working condition.',  # Detailed
+            'identification_marks': 'Red silicone case with cat sticker, small dent on corner, sunset beach wallpaper',  # Very specific
+            'lost_location': 'Library 2nd Floor Study Area',  # Specific location
+            'approximate_date': 'Yesterday afternoon around 2 PM'
         }
         
         try:
@@ -662,8 +662,8 @@ class CampusLostFoundTester:
         """Test that INSUFFICIENT confidence band exists and is used for weak evidence"""
         print("\n⚠️ Testing INSUFFICIENT Confidence Band...")
         
-        if not self.test_item_found_id:
-            self.log_result("AI INSUFFICIENT Band", False, "No FOUND item ID available")
+        if not self.detailed_found_item_id:
+            self.log_result("AI INSUFFICIENT Band", False, "No detailed FOUND item ID available")
             return
         
         # Create extremely vague claim that should trigger INSUFFICIENT
@@ -671,12 +671,12 @@ class CampusLostFoundTester:
         headers = {'Authorization': f'Bearer {self.student_token}'}
         
         form_data = {
-            'item_id': self.test_item_found_id,
+            'item_id': self.detailed_found_item_id,
             'product_type': 'thing',  # Extremely vague
-            'description': 'my stuff',  # Minimal description
-            'identification_marks': 'normal',  # No real identification
-            'lost_location': 'somewhere',  # Vague location
-            'approximate_date': 'sometime'  # Vague time
+            'description': 'my stuff that I lost',  # Minimal description
+            'identification_marks': 'normal looking',  # No real identification
+            'lost_location': 'somewhere on campus',  # Vague location
+            'approximate_date': 'sometime this week'  # Vague time
         }
         
         try:
@@ -708,8 +708,8 @@ class CampusLostFoundTester:
         """Test that input quality assessment penalizes vague descriptions"""
         print("\n📝 Testing Input Quality Assessment...")
         
-        if not self.test_item_found_id:
-            self.log_result("Input Quality Assessment", False, "No FOUND item ID available")
+        if not self.detailed_found_item_id:
+            self.log_result("Input Quality Assessment", False, "No detailed FOUND item ID available")
             return
         
         # Test with description that should trigger quality flags
@@ -717,11 +717,11 @@ class CampusLostFoundTester:
         headers = {'Authorization': f'Bearer {self.student_token}'}
         
         form_data = {
-            'item_id': self.test_item_found_id,
+            'item_id': self.detailed_found_item_id,
             'product_type': 'phone',  # Generic term
-            'description': 'black phone small',  # Short with only generic terms
-            'identification_marks': 'black case normal',  # Generic marks
-            'lost_location': 'library',  # Generic location
+            'description': 'black phone small device',  # Short with only generic terms
+            'identification_marks': 'black case normal size',  # Generic marks
+            'lost_location': 'library somewhere',  # Generic location
             'approximate_date': 'yesterday'
         }
         
