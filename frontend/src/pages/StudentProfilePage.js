@@ -209,12 +209,12 @@ const StudentProfilePage = () => {
             </p>
           </div>
 
-          {/* Phase 2 - Item 8: Logout Button */}
+          {/* Logout Button with Confirmation */}
           <div className="pt-4 border-t border-slate-200">
             <Button 
               variant="outline" 
               className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               data-testid="logout-btn"
             >
               <LogOut className="w-4 h-4 mr-2" />
@@ -223,6 +223,47 @@ const StudentProfilePage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-slate-900">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Confirm Logout
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to logout? You will need to login again to access your account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowLogoutDialog(false)}
+              disabled={loggingOut}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleLogoutConfirm}
+              disabled={loggingOut}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {loggingOut ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                  Logging out...
+                </>
+              ) : (
+                <>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Yes, Logout
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
