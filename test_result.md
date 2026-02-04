@@ -423,6 +423,37 @@ agent_communication:
       4. POST /api/claims - should reject if item is LOST
       5. POST /api/claims/{id}/decision - should require reason
 
+  - agent: "main"
+    message: |
+      BUG FIX: AI Claim "Item not found" error
+      
+      ROOT CAUSE: AIClaimChat component expected itemId as a prop ({ itemId, onClose }) 
+      but when used as a route element (<Route path="claim/:itemId" element={<AIClaimChat />} />),
+      it receives itemId via URL params, not props. Result: itemId was undefined.
+      
+      FIX APPLIED to /app/frontend/src/components/AIClaimChat.js:
+      1. Changed from prop-based to useParams() extraction: const { itemId } = useParams()
+      2. Added useEffect to validate item exists on mount
+      3. Added check that item is FOUND type (not LOST)
+      4. Added check that item is not already claimed/returned/archived
+      5. Added loading state while validating
+      6. Added error state with clear message if item unavailable
+      7. Added item preview card showing what's being claimed
+      8. Pre-submission validation ensures itemId is present
+      9. Better error handling with automatic redirect on 404
+      
+      BACKEND VERIFIED: Claim endpoint works correctly when given valid item_id
+      Created test FOUND item: 3918d7ab-280a-4460-9b50-a5feb163d9e6
+      Successfully submitted claim: 871d4838-5321-4fb6-bccb-4217c4abded8
+      
+      PLEASE TEST FRONTEND:
+      1. Login as student (112723205047 / 23-04-2006)
+      2. Go to Lobby (/lobby)
+      3. Find a FOUND item and click "Claim This Item"
+      4. Verify item preview shows at top
+      5. Complete the claim form
+      6. Submit and verify no "Item not found" error
+
   - agent: "testing"
     message: |
       🎉 BACKEND TESTING COMPLETE - ALL CRITICAL TESTS PASSED (100% SUCCESS RATE)
