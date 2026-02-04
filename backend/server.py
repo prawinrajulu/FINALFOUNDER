@@ -1577,21 +1577,68 @@ async def answer_verification(claim_id: str, data: VerificationAnswer, current_u
 
 @api_router.post("/claims/{claim_id}/decision")
 async def claim_decision(claim_id: str, data: ClaimDecision, current_user: dict = Depends(require_admin)):
+    """
+    Admin decision on a claim.
+    ACCOUNTABILITY: Reason is MANDATORY for audit trail.
+    """
     if data.status not in ["approved", "rejected"]:
         raise HTTPException(status_code=400, detail="Status must be 'approved' or 'rejected'")
+    
+    # ACCOUNTABILITY: Reason is MANDATORY
+    if not data.reason or not data.reason.strip():
+        raise HTTPException(
+            status_code=400, 
+            detail="Reason is mandatory for claim decisions (accountability requirement)"
+        )
+    
+    if len(data.reason.strip()) < 10:
+        raise HTTPException(
+            status_code=400,
+            detail="Please provide a meaningful reason (minimum 10 characters)"
+        )
     
     claim = await db.claims.find_one({"id": claim_id})
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
     
+    now = datetime.now(timezone.utc)
+    
     await db.claims.update_one(
         {"id": claim_id},
-        {"$set": {"status": data.status, "admin_notes": data.notes}}
+        {"$set": {
+            "status": data.status,
+            "admin_notes": data.reason,
+            "decided_by": current_user["sub"],
+            "decided_at": now.isoformat()
+        }}
     )
     
-    # Update item status if approved
+    # Update item status if approved (lifecycle transition)
     if data.status == "approved":
-        await db.items.update_one({"id": claim["item_id"]}, {"$set": {"status": "claimed"}})
+        await db.items.update_one(
+            {"id": claim["item_id"]},
+            {
+                "$set": {"status": "claimed"},
+                "$push": {"status_history": {
+                    "status": "claimed",
+                    "changed_at": now.isoformat(),
+                    "changed_by": current_user["sub"],
+                    "reason": f"Claim approved: {data.reason}"
+                }}
+            }
+        )
+    
+    # AUDIT LOG - mandatory for admin accountability
+    await db.audit_logs.insert_one({
+        "id": str(uuid.uuid4()),
+        "action": f"claim_{data.status}",
+        "claim_id": claim_id,
+        "item_id": claim["item_id"],
+        "admin_id": current_user["sub"],
+        "admin_role": current_user["role"],
+        "reason": data.reason,
+        "timestamp": now.isoformat()
+    })
     
     # Send notification
     status_text = "approved" if data.status == "approved" else "rejected"
@@ -1601,11 +1648,11 @@ async def claim_decision(claim_id: str, data: ClaimDecision, current_user: dict 
         "sender_type": "admin",
         "recipient_id": claim["claimant_id"],
         "recipient_type": "student",
-        "content": f"Your claim has been {status_text}. {data.notes or ''}",
+        "content": f"Your claim has been {status_text}. Reason: {data.reason}",
         "item_id": claim["item_id"],
         "claim_id": claim_id,
         "is_read": False,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "created_at": now.isoformat()
     })
     
     return {"message": f"Claim {status_text}"}
