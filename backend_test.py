@@ -29,13 +29,15 @@ class CampusLostFoundTester:
         if details:
             print(f"   Details: {details}")
 
-    def make_request(self, method, endpoint, data=None, files=None, headers=None):
+    def make_request(self, method, endpoint, data=None, files=None, headers=None, use_student_token=False):
         """Make HTTP request with error handling"""
         url = f"{self.base_url}/{endpoint}"
         default_headers = {'Content-Type': 'application/json'}
         
-        if self.admin_token:
-            default_headers['Authorization'] = f'Bearer {self.admin_token}'
+        # Choose token based on parameter
+        token = self.student_token if use_student_token else self.admin_token
+        if token:
+            default_headers['Authorization'] = f'Bearer {token}'
         
         if headers:
             default_headers.update(headers)
