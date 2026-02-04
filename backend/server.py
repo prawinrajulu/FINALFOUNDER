@@ -124,7 +124,38 @@ class AdminNote(BaseModel):
 
 class ClaimDecision(BaseModel):
     status: str  # "approved" or "rejected"
-    notes: Optional[str] = ""
+    reason: str  # MANDATORY reason for decision (accountability)
+
+# NEW: "I Found This" response for LOST items (separate from Claims)
+class FoundResponse(BaseModel):
+    item_id: str
+    message: str
+    found_location: str
+    found_time: str
+
+# NEW: Item status transition model
+class ItemStatusUpdate(BaseModel):
+    status: str  # Valid transitions enforced
+    reason: Optional[str] = None
+
+# Item lifecycle states:
+# LOST: reported -> found_reported -> claimed -> returned -> archived
+# FOUND: reported -> claimed -> returned -> archived
+VALID_ITEM_STATUSES = ["reported", "found_reported", "claimed", "returned", "archived"]
+
+# AI Confidence bands (NOT percentages)
+CONFIDENCE_BANDS = {
+    "LOW": (0, 40),
+    "MEDIUM": (41, 70),
+    "HIGH": (71, 100)
+}
+
+def get_confidence_band(score: int) -> str:
+    """Convert numeric score to confidence band - AI is ADVISORY ONLY"""
+    for band, (low, high) in CONFIDENCE_BANDS.items():
+        if low <= score <= high:
+            return band
+    return "LOW"
 
 class FolderCreate(BaseModel):
     name: str
