@@ -680,8 +680,8 @@ async def create_item(
     description: str = Form(...),
     location: str = Form(...),
     approximate_time: str = Form(...),
-    secret_message: str = Form(...),  # NEW: Mandatory secret identification message
-    image: UploadFile = File(...),
+    secret_message: str = Form(...),  # Mandatory secret identification message
+    image: Optional[UploadFile] = File(None),  # CHANGED: Image is now OPTIONAL
     current_user: dict = Depends(require_student)
 ):
     if item_type not in ["lost", "found"]:
@@ -690,20 +690,38 @@ async def create_item(
     if not secret_message or not secret_message.strip():
         raise HTTPException(status_code=400, detail="Secret Identification Message is mandatory")
     
-    if not image.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Only image files are allowed")
+    # Validate description quality - penalize vague inputs
+    if len(description.strip()) < 20:
+        raise HTTPException(
+            status_code=400, 
+            detail="Description too short. Please provide detailed description (minimum 20 characters)"
+        )
     
     item_id = str(uuid.uuid4())
-    ext = image.filename.split(".")[-1] if "." in image.filename else "jpg"
-    image_filename = f"{item_id}.{ext}"
-    image_path = ITEMS_DIR / image_filename
+    image_url = None
     
-    with open(image_path, "wb") as f:
-        content = await image.read()
-        f.write(content)
+    # Handle optional image upload
+    if image and image.filename:
+        if not image.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Only image files are allowed")
+        
+        ext = image.filename.split(".")[-1] if "." in image.filename else "jpg"
+        image_filename = f"{item_id}.{ext}"
+        image_path = ITEMS_DIR / image_filename
+        
+        with open(image_path, "wb") as f:
+            content = await image.read()
+            f.write(content)
+        
+        image_url = f"/uploads/items/{image_filename}"
     
     # Auto-capture current date and time
     now = datetime.now(timezone.utc)
+    
+    # NEW: Proper item lifecycle status
+    # LOST items start as "reported" - waiting for someone to find
+    # FOUND items start as "reported" - waiting for owner to claim
+    initial_status = "reported"
     
     item = {
         "id": item_id,
@@ -712,20 +730,26 @@ async def create_item(
         "description": description,
         "location": location,
         "approximate_time": approximate_time,
-        "secret_message": secret_message,  # NEW: Store secret message (NOT exposed publicly)
-        "image_url": f"/uploads/items/{image_filename}",
+        "secret_message": secret_message,  # NOT exposed publicly
+        "image_url": image_url,  # Can be null if no image uploaded
         "student_id": current_user["sub"],
-        "status": "active",  # active, claimed, resolved
+        "status": initial_status,  # NEW: reported -> found_reported -> claimed -> returned -> archived
         "is_deleted": False,
         "delete_reason": None,
         "deleted_at": None,
-        "created_at": now.isoformat(),  # ISO datetime
-        "created_date": now.strftime("%Y-%m-%d"),  # YYYY-MM-DD
-        "created_time": now.strftime("%H:%M:%S"),  # HH:MM:SS
-        "likes": 0,  # Like count
-        "dislikes": 0,  # Dislike count
-        "liked_by": [],  # List of user IDs who liked
-        "disliked_by": []  # List of user IDs who disliked
+        "created_at": now.isoformat(),
+        "created_date": now.strftime("%Y-%m-%d"),
+        "created_time": now.strftime("%H:%M:%S"),
+        "likes": 0,
+        "dislikes": 0,
+        "liked_by": [],
+        "disliked_by": [],
+        "status_history": [{
+            "status": initial_status,
+            "changed_at": now.isoformat(),
+            "changed_by": current_user["sub"],
+            "reason": "Item reported"
+        }]
     }
     
     await db.items.insert_one(item)
@@ -735,8 +759,10 @@ async def create_item(
         "id": str(uuid.uuid4()),
         "action": "item_created",
         "item_id": item_id,
+        "item_type": item_type,
         "user_id": current_user["sub"],
         "user_role": "student",
+        "details": {"has_image": image_url is not None},
         "timestamp": datetime.now(timezone.utc).isoformat()
     })
     
