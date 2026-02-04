@@ -634,3 +634,73 @@ agent_communication:
       - Admin: superadmin / SuperAdmin@123 ✅
       - Student 1 (Sam): 112723205028 / 17-04-2006 ✅  
       - Student 2 (RAJU): 112723205047 / 23-04-2006 ✅
+
+  - agent: "main"
+    message: |
+      🔄 PHASE 1 & 2 IMPLEMENTATION COMPLETE - MAJOR SYSTEM REFACTOR
+      
+      IMPLEMENTED CHANGES:
+      
+      PHASE 1 - LOGICAL FIXES:
+      A. CLAIM VISIBILITY & ELIGIBILITY FIX
+         - Added `is_owner` flag to /api/items/public endpoint
+         - ItemCard.js now checks ownership and hides claim buttons for owners
+         - Shows "You reported this item" badge for item owners
+         - Backend returns ownership info for each item
+         Files: server.py, ItemCard.js
+      
+      B. ADMIN → STUDENT MESSAGE SEEN LOGIC
+         - AdminMessages.js now shows exact `seen_at` timestamp
+         - Format: "Seen • MMM d, h:mm a" when message is read
+         - "Not Seen" displayed when message hasn't been viewed
+         Files: AdminMessages.js
+      
+      PHASE 2 - MAJOR CHANGES:
+      1. REMOVED COMMON LOBBY COMPLETELY
+         - Deleted reference to PublicPage from App.js
+         - Replaced /lobby route with /feed (Campus Feed)
+         Files: App.js, AdminSidebar.js, StudentNav.js
+      
+      2. NEW MODULE: CAMPUS NOTICE & APPRECIATION FEED
+         - Created CampusFeed.js with full social media-style feed
+         - Admin/SuperAdmin can create, edit, delete posts
+         - Students can like posts and add comments
+         - Comments can be moderated (admin can delete any)
+         - Post types: announcement, appreciation, notice
+         - Backend endpoints: /api/feed/posts/*
+         Files: CampusFeed.js, server.py, api.js
+      
+      3. FIX AI MATCHING PERCENTAGE (ALWAYS 0% BUG)
+         - CRITICAL FIX: Query used status="active" but items stored with "reported"
+         - Fixed query: {"status": {"$in": ["reported", "active", "found_reported"]}}
+         - Added fallback algorithmic matching when AI unavailable
+         - Uses category, description, location, date similarity scoring
+         Files: server.py
+      
+      4. CLAIM REQUEST UI FIX
+         - Mandatory reason for approve/reject decisions
+         - Better error handling
+         Files: AdminClaimRequests.js
+      
+      5. STUDENT PROFILE LOGOUT
+         - Added logout button in StudentProfilePage.js
+         - Clears session and redirects to login
+         Files: StudentProfilePage.js
+      
+      READY FOR TESTING:
+      - Campus Feed (create post as admin, like/comment as student)
+      - AI Matching (should now show non-zero percentages)
+      - Claim visibility (owner should see badge, not claim button)
+      - Message seen timestamps
+      - Student logout
+
+test_plan:
+  current_focus:
+    - "Campus Feed - Post creation (Admin)"
+    - "Campus Feed - Like and comment (Student)"
+    - "AI Matching - Should show non-zero percentages"
+    - "Claim visibility - Owner badge instead of claim button"
+    - "Student logout button"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
