@@ -72,6 +72,16 @@ const AdminClaims = () => {
   };
 
   const handleDecision = async (status) => {
+    // ACCOUNTABILITY: Reason is MANDATORY
+    if (!decisionNotes.trim()) {
+      toast.error('Reason is mandatory for claim decisions (accountability requirement)');
+      return;
+    }
+    if (decisionNotes.trim().length < 10) {
+      toast.error('Please provide a meaningful reason (minimum 10 characters)');
+      return;
+    }
+    
     try {
       await claimsAPI.makeDecision(selectedClaim.id, status, decisionNotes);
       toast.success(`Claim ${status}`);
@@ -80,7 +90,8 @@ const AdminClaims = () => {
       setSelectedClaim(null);
       fetchClaims();
     } catch (error) {
-      toast.error('Failed to update claim');
+      const message = error.response?.data?.detail || 'Failed to update claim';
+      toast.error(message);
     }
   };
 
