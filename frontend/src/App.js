@@ -124,10 +124,10 @@ function AppRoutes() {
       {/* Landing Page - No public browsing before login */}
       <Route path="/" element={getHomeRedirect()} />
       
-      {/* Common Lobby - NOW REQUIRES AUTHENTICATION */}
-      <Route path="/lobby" element={
+      {/* Campus Feed - Replaces Common Lobby - REQUIRES AUTHENTICATION */}
+      <Route path="/feed" element={
         <AuthenticatedRoute>
-          <PublicPage />
+          <CampusFeed />
         </AuthenticatedRoute>
       } />
       
