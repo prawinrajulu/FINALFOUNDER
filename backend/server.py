@@ -545,6 +545,58 @@ async def get_students(current_user: dict = Depends(require_admin)):
     students = await db.students.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return students
 
+# NEW: Get students by department and year (CONTEXT SWITCH)
+@api_router.get("/students/by-context")
+async def get_students_by_context(
+    department: str = Query(..., description="Department name"),
+    year: str = Query(..., description="Year (1, 2, 3, 4)"),
+    current_user: dict = Depends(require_admin)
+):
+    """
+    Get students filtered by department and year.
+    This is the CONTEXT SWITCH - admin must select dept+year first before any operations.
+    """
+    query = {"department": department, "year": year}
+    students = await db.students.find(query, {"_id": 0}).sort("full_name", 1).to_list(1000)
+    total_count = await db.students.count_documents(query)
+    
+    return {
+        "department": department,
+        "year": year,
+        "total_count": total_count,
+        "students": students
+    }
+
+# NEW: Get available departments and years for context selection
+@api_router.get("/students/contexts")
+async def get_student_contexts(current_user: dict = Depends(require_admin)):
+    """Get unique department + year combinations with counts"""
+    pipeline = [
+        {
+            "$group": {
+                "_id": {"department": "$department", "year": "$year"},
+                "count": {"$sum": 1}
+            }
+        },
+        {"$sort": {"_id.department": 1, "_id.year": 1}}
+    ]
+    
+    contexts = await db.students.aggregate(pipeline).to_list(100)
+    
+    # Structure as department -> years -> count
+    result = {}
+    for ctx in contexts:
+        dept = ctx["_id"]["department"]
+        year = ctx["_id"]["year"]
+        count = ctx["count"]
+        
+        if dept not in result:
+            result[dept] = {"years": {}, "total": 0}
+        result[dept]["years"][year] = count
+        result[dept]["total"] += count
+    
+    return result
+
 @api_router.get("/students/{student_id}")
 async def get_student(student_id: str, current_user: dict = Depends(require_admin)):
     student = await db.students.find_one({"id": student_id}, {"_id": 0})
