@@ -2857,9 +2857,9 @@ async def like_feed_post(post_id: str, current_user: dict = Depends(get_current_
 async def add_feed_comment(
     post_id: str,
     data: FeedCommentCreate,
-    current_user: dict = Depends(require_student)
+    current_user: dict = Depends(get_current_user)  # Changed: Allow ALL authenticated users
 ):
-    """Add comment to feed post - STUDENTS ONLY (Admin comments via messages)"""
+    """Add comment to feed post - ALL AUTHENTICATED USERS can comment"""
     post = await db.feed_posts.find_one({"id": post_id, "is_deleted": False})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -2867,12 +2867,19 @@ async def add_feed_comment(
     if not post.get("comments_enabled", True):
         raise HTTPException(status_code=400, detail="Comments are disabled for this post")
     
+    user_id = current_user.get("sub")
+    user_role = current_user.get("role", "student")
+    is_admin_comment = user_role in ["admin", "super_admin"]
+    
     comment = {
         "id": str(uuid.uuid4()),
         "content": data.content,
-        "author_id": current_user.get("sub"),
+        "author_id": user_id,
+        "is_admin_comment": is_admin_comment,
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "is_deleted": False
+        "is_deleted": False,
+        "likes": 0,
+        "liked_by": []
     }
     
     await db.feed_posts.update_one(
@@ -2881,6 +2888,45 @@ async def add_feed_comment(
     )
     
     return {"message": "Comment added", "comment_id": comment["id"]}
+
+@api_router.post("/feed/posts/{post_id}/comments/{comment_id}/like")
+async def like_feed_comment(
+    post_id: str,
+    comment_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Like/Unlike a comment - ALL authenticated users"""
+    post = await db.feed_posts.find_one({"id": post_id, "is_deleted": False})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Find the comment
+    comment = next((c for c in post.get("comments", []) if c["id"] == comment_id and not c.get("is_deleted")), None)
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    user_id = current_user.get("sub")
+    liked_by = comment.get("liked_by", [])
+    
+    if user_id in liked_by:
+        # Unlike
+        liked_by.remove(user_id)
+        action = "unliked"
+    else:
+        # Like
+        liked_by.append(user_id)
+        action = "liked"
+    
+    # Update the comment
+    await db.feed_posts.update_one(
+        {"id": post_id, "comments.id": comment_id},
+        {"$set": {
+            "comments.$.liked_by": liked_by,
+            "comments.$.likes": len(liked_by)
+        }}
+    )
+    
+    return {"message": f"Comment {action}", "likes": len(liked_by), "is_liked": action == "liked"}
 
 @api_router.delete("/feed/posts/{post_id}/comments/{comment_id}")
 async def delete_feed_comment(
