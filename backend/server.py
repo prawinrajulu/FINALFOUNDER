@@ -144,10 +144,12 @@ class ItemStatusUpdate(BaseModel):
 VALID_ITEM_STATUSES = ["reported", "found_reported", "claimed", "returned", "archived"]
 
 # AI Confidence bands (NOT percentages)
+# AUDIT FIX: Added INSUFFICIENT band for weak evidence cases
 CONFIDENCE_BANDS = {
-    "LOW": (0, 40),
-    "MEDIUM": (41, 70),
-    "HIGH": (71, 100)
+    "INSUFFICIENT": (0, 20),   # Not enough information to assess
+    "LOW": (21, 45),           # Many mismatches or weak evidence
+    "MEDIUM": (46, 70),        # Some matches, needs admin verification
+    "HIGH": (71, 100)          # Strong evidence alignment
 }
 
 def get_confidence_band(score: int) -> str:
@@ -155,7 +157,57 @@ def get_confidence_band(score: int) -> str:
     for band, (low, high) in CONFIDENCE_BANDS.items():
         if low <= score <= high:
             return band
-    return "LOW"
+    return "INSUFFICIENT"
+
+def assess_input_quality(text: str) -> dict:
+    """
+    AUDIT FIX: Assess the quality of user input to penalize vague descriptions.
+    Returns quality score and flags.
+    """
+    if not text:
+        return {"score": 0, "quality": "missing", "flags": ["No input provided"]}
+    
+    text = text.strip().lower()
+    flags = []
+    score = 50  # Start neutral
+    
+    # Generic terms that indicate low quality
+    generic_terms = ["phone", "laptop", "wallet", "keys", "bag", "bottle", "book", 
+                     "black", "white", "silver", "blue", "red", "small", "big"]
+    
+    # Specific indicators that suggest genuine ownership
+    specific_indicators = ["serial", "crack", "scratch", "dent", "sticker", "engraved",
+                          "torn", "faded", "broken", "chipped", "custom", "unique",
+                          "model", "version", "year", "brand"]
+    
+    # Check for generic-only descriptions
+    words = text.split()
+    generic_count = sum(1 for word in words if word in generic_terms)
+    specific_count = sum(1 for word in words if any(ind in word for ind in specific_indicators))
+    
+    if len(words) < 5:
+        score -= 20
+        flags.append("Very short description")
+    
+    if generic_count > 0 and specific_count == 0:
+        score -= 30
+        flags.append("Only generic terms, no unique identifiers")
+    
+    if specific_count >= 2:
+        score += 20
+        flags.append("Contains specific ownership indicators")
+    
+    # Length bonus for detailed descriptions
+    if len(text) > 100:
+        score += 10
+    
+    quality = "high" if score >= 70 else "medium" if score >= 40 else "low"
+    
+    return {
+        "score": max(0, min(100, score)),
+        "quality": quality,
+        "flags": flags
+    }
 
 class FolderCreate(BaseModel):
     name: str
