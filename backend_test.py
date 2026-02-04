@@ -166,7 +166,10 @@ class CampusLostFoundTester:
         """Test creating a LOST item for testing found-response"""
         print("\n📱 Creating Test LOST Item...")
         
-        # Create form data for lost item
+        # Use requests.post with data parameter for form data
+        url = f"{self.base_url}/items"
+        headers = {'Authorization': f'Bearer {self.student_token}'}
+        
         form_data = {
             'item_type': 'lost',
             'item_keyword': 'Smartphone',
@@ -176,9 +179,11 @@ class CampusLostFoundTester:
             'secret_message': 'The phone has a small scratch near the camera and my name "Alex" is engraved on the back case'
         }
         
-        response = self.make_request('POST', 'items', data=form_data, 
-                                   headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                                   use_student_token=True)
+        try:
+            response = requests.post(url, data=form_data, headers=headers)
+        except Exception as e:
+            self.log_result("Create LOST Item", False, f"Request error: {str(e)}")
+            return False
         
         if response and response.status_code == 200:
             data = response.json()
@@ -198,7 +203,10 @@ class CampusLostFoundTester:
         """Test creating a FOUND item for testing claims"""
         print("\n💼 Creating Test FOUND Item...")
         
-        # Create form data for found item
+        # Use requests.post with data parameter for form data
+        url = f"{self.base_url}/items"
+        headers = {'Authorization': f'Bearer {self.student_token}'}
+        
         form_data = {
             'item_type': 'found',
             'item_keyword': 'Wallet',
@@ -208,9 +216,11 @@ class CampusLostFoundTester:
             'secret_message': 'The wallet has a student ID card with photo and some credit cards inside'
         }
         
-        response = self.make_request('POST', 'items', data=form_data,
-                                   headers={'Content-Type': 'application/x-www-form-urlencoded'},
-                                   use_student_token=True)
+        try:
+            response = requests.post(url, data=form_data, headers=headers)
+        except Exception as e:
+            self.log_result("Create FOUND Item", False, f"Request error: {str(e)}")
+            return False
         
         if response and response.status_code == 200:
             data = response.json()
