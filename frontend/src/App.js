@@ -149,6 +149,7 @@ function AppRoutes() {
         <Route path="report-lost" element={<ReportLostPage />} />
         <Route path="report-found" element={<ReportFoundPage />} />
         <Route path="claim/:itemId" element={<AIClaimChat />} />
+        <Route path="found-response/:itemId" element={<FoundResponsePage />} />
         <Route path="my-items" element={<MyItemsPage />} />
         <Route path="profile" element={<StudentProfilePage />} />
         <Route path="notifications" element={<NotificationsPage />} />
