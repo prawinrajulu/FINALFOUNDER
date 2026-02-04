@@ -5,8 +5,16 @@ import { studentAPI } from '../services/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Label } from '../components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../components/ui/dialog';
 import { toast } from 'sonner';
-import { User, Camera, Mail, Phone, GraduationCap, Calendar, Hash, LogOut } from 'lucide-react';
+import { User, Camera, Mail, Phone, GraduationCap, Calendar, Hash, LogOut, AlertTriangle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -16,6 +24,8 @@ const StudentProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -53,17 +63,24 @@ const StudentProfilePage = () => {
     }
   };
 
-  // Phase 2 - Item 8: Logout handler
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-    toast.success('Logged out successfully');
+  // Logout with confirmation
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setLoggingOut(true);
+    setTimeout(() => {
+      logout();
+      navigate('/');
+      toast.success('Logged out successfully');
+    }, 500);
   };
 
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="spinner" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600" />
       </div>
     );
   }
