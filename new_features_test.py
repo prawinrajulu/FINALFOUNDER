@@ -317,7 +317,7 @@ class NewFeaturesTester:
         """Test GET /api/ai/matches - Should show non-zero match percentages"""
         print("\n🤖 Testing AI Matching - Non-Zero Percentages...")
         
-        response = self.make_request('GET', 'ai/matches', token=self.sam_token)
+        response = self.make_request('GET', 'ai/matches', token=self.admin_token)
         
         if response and response.status_code == 200:
             matches = response.json()
@@ -351,7 +351,7 @@ class NewFeaturesTester:
         print("\n🔄 Testing AI Matching - Fallback Algorithm...")
         
         # The fallback should work even when AI is unavailable
-        response = self.make_request('GET', 'ai/matches', token=self.raju_token)
+        response = self.make_request('GET', 'ai/matches', token=self.admin_token)
         
         if response and response.status_code == 200:
             matches = response.json()
