@@ -9,9 +9,13 @@ class CampusLostFoundTester:
     def __init__(self, base_url="https://codecheck-24.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.admin_token = None
+        self.student_token = None
         self.tests_run = 0
         self.tests_passed = 0
         self.failed_tests = []
+        self.test_item_lost_id = None
+        self.test_item_found_id = None
+        self.test_claim_id = None
 
     def log_result(self, test_name, success, details=""):
         """Log test result"""
