@@ -1898,6 +1898,36 @@ async def react_to_message(message_id: str, reaction: str, current_user: dict = 
     )
     return {"message": "Reaction added successfully", "reaction": reaction}
 
+# FIX B: Admin endpoint to see message delivery status
+@api_router.get("/messages/admin/sent")
+async def get_admin_sent_messages(current_user: dict = Depends(require_admin)):
+    """
+    Admin can see all messages they sent with seen status.
+    Shows whether and when students viewed each message.
+    """
+    messages = await db.messages.find(
+        {"sender_id": current_user["sub"], "sender_type": "admin"},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(500)
+    
+    # Enrich with recipient info and seen status
+    for msg in messages:
+        student = await db.students.find_one(
+            {"id": msg["recipient_id"]},
+            {"_id": 0, "full_name": 1, "roll_number": 1, "department": 1}
+        )
+        msg["recipient"] = student or {"full_name": "Unknown Student"}
+        
+        # Explicit seen status for admin
+        msg["delivery_status"] = {
+            "sent_at": msg.get("created_at"),
+            "is_seen": msg.get("is_read", False),
+            "seen_at": msg.get("seen_at"),
+            "reaction": msg.get("student_reaction")
+        }
+    
+    return messages
+
 @api_router.get("/messages")
 async def get_messages(current_user: dict = Depends(get_current_user)):
     """
