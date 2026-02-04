@@ -70,104 +70,150 @@ const PublicPage = () => {
     );
   };
 
-  const ItemCard = ({ item }) => (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <div className="relative">
-        {item.image_url && (
-          <img 
-            src={`${BACKEND_URL}${item.image_url}`}
-            alt={item.item_keyword}
-            className="w-full h-48 object-cover"
-          />
-        )}
-        <div className="absolute top-3 left-3">
-          <Badge className={item.item_type === 'lost' ? 'bg-orange-500' : 'bg-emerald-500'}>
-            {item.item_type === 'lost' ? 'Lost' : 'Found'}
-          </Badge>
-        </div>
-        {item.item_keyword && (
-          <div className="absolute top-3 right-3">
-            <Badge variant="secondary" className="bg-white/90 backdrop-blur">
-              {item.item_keyword}
+  const ItemCard = ({ item }) => {
+    // SEMANTIC FIX: Different actions for LOST vs FOUND items
+    const isLostItem = item.item_type === 'lost';
+    const isFoundItem = item.item_type === 'found';
+    
+    const handleAction = () => {
+      if (isFoundItem) {
+        // FOUND items → Claim (ownership verification)
+        navigate(`/student/claim/${item.id}`);
+      } else {
+        // LOST items → I Found This response
+        navigate(`/student/found-response/${item.id}`);
+      }
+    };
+    
+    return (
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+        <div className="relative">
+          {item.image_url ? (
+            <img 
+              src={`${BACKEND_URL}${item.image_url}`}
+              alt={item.item_keyword}
+              className="w-full h-48 object-cover"
+            />
+          ) : (
+            <div className="w-full h-48 bg-slate-100 flex items-center justify-center">
+              <Package className="w-12 h-12 text-slate-300" />
+              <span className="text-xs text-slate-400 absolute bottom-2">No image</span>
+            </div>
+          )}
+          <div className="absolute top-3 left-3">
+            <Badge className={isLostItem ? 'bg-orange-500' : 'bg-emerald-500'}>
+              {isLostItem ? 'Lost' : 'Found'}
             </Badge>
           </div>
-        )}
-      </div>
-      
-      <CardContent className="p-5 space-y-3">
-        {/* Description */}
-        <p className="text-sm text-slate-700 line-clamp-2">
-          {item.description}
-        </p>
-
-        {/* Location & Time */}
-        <div className="flex flex-wrap gap-3 text-xs text-slate-600">
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5" />
-            <span>{item.location}</span>
-          </div>
-          {item.approximate_time && (
-            <div className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              <span>{item.approximate_time}</span>
+          {item.status && item.status !== 'reported' && (
+            <div className="absolute top-3 right-3">
+              <Badge variant="secondary" className={`
+                ${item.status === 'found_reported' ? 'bg-blue-100 text-blue-700' : ''}
+                ${item.status === 'claimed' ? 'bg-green-100 text-green-700' : ''}
+              `}>
+                {item.status === 'found_reported' ? 'Found!' : item.status}
+              </Badge>
+            </div>
+          )}
+          {item.item_keyword && item.status === 'reported' && (
+            <div className="absolute top-3 right-3">
+              <Badge variant="secondary" className="bg-white/90 backdrop-blur">
+                {item.item_keyword}
+              </Badge>
             </div>
           )}
         </div>
+        
+        <CardContent className="p-5 space-y-3">
+          {/* Description */}
+          <p className="text-sm text-slate-700 line-clamp-2">
+            {item.description}
+          </p>
 
-        {/* Date */}
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Calendar className="w-3.5 h-3.5" />
-          <span>{item.created_date}</span>
-        </div>
-
-        {/* Student Info - PUBLIC SAFE */}
-        <div className="pt-3 border-t border-slate-100">
-          <p className="text-xs font-medium text-slate-500 mb-2">Reported by:</p>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-sm">
-              <User2 className="w-4 h-4 text-slate-400" />
-              <span className="font-medium text-slate-700">{item.student?.full_name || 'Anonymous'}</span>
+          {/* Location & Time */}
+          <div className="flex flex-wrap gap-3 text-xs text-slate-600">
+            <div className="flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>{item.location}</span>
             </div>
-            <div className="flex items-center gap-3 text-xs text-slate-600">
+            {item.approximate_time && (
               <div className="flex items-center gap-1">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>{item.student?.department || 'N/A'}</span>
+                <Clock className="w-3.5 h-3.5" />
+                <span>{item.approximate_time}</span>
               </div>
-              <span>•</span>
-              <span>Year {item.student?.year || 'N/A'}</span>
+            )}
+          </div>
+
+          {/* Date */}
+          <div className="flex items-center gap-1 text-xs text-slate-500">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>{item.created_date}</span>
+          </div>
+
+          {/* Student Info - PUBLIC SAFE */}
+          <div className="pt-3 border-t border-slate-100">
+            <p className="text-xs font-medium text-slate-500 mb-2">Reported by:</p>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-sm">
+                <User2 className="w-4 h-4 text-slate-400" />
+                <span className="font-medium text-slate-700">{item.student?.full_name || 'Anonymous'}</span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-slate-600">
+                <div className="flex items-center gap-1">
+                  <GraduationCap className="w-3.5 h-3.5" />
+                  <span>{item.student?.department || 'N/A'}</span>
+                </div>
+                <span>•</span>
+                <span>Year {item.student?.year || 'N/A'}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Login CTA for non-authenticated users */}
-        {!isAuthenticated && (
-          <div className="pt-3 border-t border-slate-100">
-            <Button 
-              onClick={() => navigate('/student/login')}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              size="sm"
-            >
-              Login to Claim Item
-            </Button>
-          </div>
-        )}
-
-        {/* Claim button for authenticated users */}
-        {isAuthenticated && (
-          <div className="pt-3 border-t border-slate-100">
-            <Button 
-              onClick={() => navigate(`/student/claim/${item.id}`)}
-              className="w-full"
-              size="sm"
-              variant="outline"
-            >
-              Claim This Item
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+          {/* SEMANTIC ACTION BUTTONS */}
+          {isAuthenticated && role === 'student' && (
+            <div className="pt-3 border-t border-slate-100">
+              {isFoundItem ? (
+                /* FOUND items → Claim (I am the owner) */
+                <Button 
+                  onClick={handleAction}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  size="sm"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Claim This Item
+                </Button>
+              ) : (
+                /* LOST items → I Found This */
+                <Button 
+                  onClick={handleAction}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  size="sm"
+                >
+                  <Hand className="w-4 h-4 mr-2" />
+                  I Found This Item
+                </Button>
+              )}
+              <p className="text-xs text-slate-500 mt-2 text-center">
+                {isFoundItem 
+                  ? "Verify ownership to claim this item" 
+                  : "Help return this item to its owner"}
+              </p>
+            </div>
+          )}
+          
+          {/* Admin view - just information */}
+          {isAuthenticated && (role === 'admin' || role === 'super_admin') && (
+            <div className="pt-3 border-t border-slate-100">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>Admin view - manage via Admin Dashboard</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   const ItemGrid = ({ items, emptyIcon, emptyMessage }) => {
     const filtered = filterItems(items);
