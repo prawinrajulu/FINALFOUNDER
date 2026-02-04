@@ -407,10 +407,16 @@ async def get_lobby_items(
     
     items = await db.items.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
     
+    # Get current user ID for ownership check
+    current_user_id = current_user.get("sub")
+    current_user_role = current_user.get("role", "student")
+    
     # Add safe student info (no roll number, phone, email)
     for item in items:
+        original_student_id = item.get("student_id")
+        
         student = await db.students.find_one(
-            {"id": item["student_id"]},
+            {"id": original_student_id},
             {"_id": 0, "full_name": 1, "department": 1, "year": 1}
         )
         if student:
@@ -421,12 +427,20 @@ async def get_lobby_items(
                 "department": "Unknown",
                 "year": "N/A"
             }
+        
+        # FIX A: Include ownership flag so frontend can hide invalid actions
+        item["is_owner"] = (original_student_id == current_user_id) if current_user_role == "student" else False
+        
         # Remove sensitive fields
         item.pop("student_id", None)
         item.pop("secret_message", None)
         
-        # Add action hints based on item type
-        if item["item_type"] == "lost":
+        # Add action hints based on item type AND ownership
+        if item["is_owner"]:
+            # Owner sees different options
+            item["available_action"] = "manage"
+            item["action_label"] = "You reported this"
+        elif item["item_type"] == "lost":
             item["available_action"] = "found_response"
             item["action_label"] = "I Found This"
         else:
