@@ -694,6 +694,37 @@ agent_communication:
       - Message seen timestamps
       - Student logout
 
+  - agent: "main"
+    message: |
+      🔧 CAMPUS FEED CRITICAL FIXES + CLAIMS UI REDESIGN COMPLETE
+      
+      CAMPUS FEED FIXES:
+      1. ✅ FIX #1: Comment input focus loss - Using isolated state per post with memo
+      2. ✅ FIX #2: Admin/SuperAdmin can now view ALL comments
+      3. ✅ FIX #3: Image upload with preview (Instagram-like)
+      4. ✅ FIX #4: Likes & comments visible to ALL users
+      5. ✅ FIX #5: Comment author display - Only safe info (name, dept, year)
+      6. ✅ FIX #6: Comment likes with double-tap support
+      7. ✅ FIX #7: Admin moderation capabilities
+      
+      BACKEND UPDATES:
+      - Added /api/feed/posts/{post_id}/comments/{comment_id}/like endpoint
+      - Comments now include: is_admin_comment, likes, liked_by fields
+      - Both students AND admins can comment
+      - Comments enriched with author info (students: name/dept/year, admins: name/role)
+      
+      CLAIMS UI REDESIGN (Phase 2 Item 6):
+      - Compact single-line row list view
+      - Click to open full chat-style detailed view
+      - Approve/Reject ONLY inside detailed view
+      - Mandatory reason for all decisions (min 10 chars)
+      - Responsive design for mobile/tablet/desktop
+      
+      Files changed:
+      - CampusFeed.js (complete rewrite with memoization)
+      - AdminClaimRequests.js (complete redesign)
+      - server.py (comment likes, admin commenting)
+
 backend:
   - task: "Campus Feed - Post creation (Admin)"
     implemented: true
