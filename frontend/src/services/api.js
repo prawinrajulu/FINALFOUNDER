@@ -45,7 +45,7 @@ export const studentAPI = {
 
 // Items APIs
 export const itemsAPI = {
-  getPublicItems: () => axios.get(`${API}/items/public`),
+  getPublicItems: () => api.get('/items/public'),  // FIX: Use authenticated api instance
   getMyItems: () => api.get('/items/my'),
   getItems: (params) => api.get('/items', { params }),
   getItem: (id) => api.get(`/items/${id}`),
