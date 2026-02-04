@@ -362,12 +362,53 @@ const AIClaimChat = () => {
   return (
     <div className="max-w-2xl mx-auto animate-fade-in">
       <button 
-        onClick={onClose || (() => navigate(-1))}
+        onClick={() => navigate(-1)}
         className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
       </button>
+
+      {/* FIX: Show item being claimed for context */}
+      {item && (
+        <Card className="mb-4 border-blue-200 bg-blue-50/50">
+          <CardContent className="py-4">
+            <p className="text-xs font-medium text-blue-600 mb-2">Claiming This Item:</p>
+            <div className="flex items-start gap-3">
+              {item.image_url ? (
+                <img 
+                  src={`${BACKEND_URL}${item.image_url}`} 
+                  alt="" 
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center">
+                  <Package className="w-6 h-6 text-slate-400" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-emerald-500 text-xs">Found Item</Badge>
+                  <span className="text-xs text-slate-500">{item.item_keyword}</span>
+                </div>
+                <p className="text-sm text-slate-700 line-clamp-2">{item.description}</p>
+                <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3" />
+                    {item.location}
+                  </span>
+                  {item.approximate_time && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {item.approximate_time}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
