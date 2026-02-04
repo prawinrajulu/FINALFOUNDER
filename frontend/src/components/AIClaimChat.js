@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import { Bot, Send, Upload, ArrowLeft, Sparkles } from 'lucide-react';
+import { Bot, Send, Upload, ArrowLeft, Sparkles, AlertTriangle, Package, MapPin, Clock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -49,14 +51,85 @@ const steps = [
   }
 ];
 
-const AIClaimChat = ({ itemId, onClose }) => {
+/**
+ * AIClaimChat - AI-powered claim submission for FOUND items only
+ * 
+ * BUG FIX: Now properly extracts itemId from useParams() instead of expecting it as a prop
+ */
+const AIClaimChat = () => {
   const navigate = useNavigate();
+  const { itemId } = useParams();  // FIX: Extract itemId from URL params
+  const { token } = useAuth();
+  
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [proofImage, setProofImage] = useState(null);
-  const [noProofChecked, setNoProofChecked] = useState(false);  // NEW: No proof checkbox
+  const [noProofChecked, setNoProofChecked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
+  
+  // NEW: Item state for validation
+  const [item, setItem] = useState(null);
+  const [itemLoading, setItemLoading] = useState(true);
+  const [itemError, setItemError] = useState(null);
+
+  // FIX: Validate item exists and is claimable on mount
+  useEffect(() => {
+    const validateItem = async () => {
+      // Check if itemId is present
+      if (!itemId) {
+        setItemError('No item ID provided. Please select an item from the lobby.');
+        setItemLoading(false);
+        return;
+      }
+
+      try {
+        setItemLoading(true);
+        // Fetch item details to validate it exists and is claimable
+        const response = await axios.get(`${BACKEND_URL}/api/lobby/items`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const foundItem = response.data.find(i => i.id === itemId);
+        
+        if (!foundItem) {
+          setItemError('Item not found. It may have been deleted, returned, or archived.');
+          setItemLoading(false);
+          return;
+        }
+        
+        // SEMANTIC CHECK: Only FOUND items can be claimed
+        if (foundItem.item_type !== 'found') {
+          setItemError('This is a LOST item. You cannot claim it. Use "I Found This" instead.');
+          setItemLoading(false);
+          return;
+        }
+        
+        // Check item status - can't claim if already claimed/returned/archived
+        if (foundItem.status === 'claimed' || foundItem.status === 'returned' || foundItem.status === 'archived') {
+          setItemError(`This item is already ${foundItem.status}. It cannot be claimed.`);
+          setItemLoading(false);
+          return;
+        }
+        
+        setItem(foundItem);
+        setItemError(null);
+      } catch (error) {
+        console.error('Failed to validate item:', error);
+        if (error.response?.status === 401) {
+          setItemError('Session expired. Please login again.');
+        } else {
+          setItemError('Failed to load item details. Please try again.');
+        }
+      } finally {
+        setItemLoading(false);
+      }
+    };
+
+    if (token) {
+      validateItem();
+    }
+  }, [itemId, token]);
 
   const currentQuestion = steps[currentStep];
 
