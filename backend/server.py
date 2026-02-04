@@ -1418,6 +1418,7 @@ async def create_ai_powered_claim(
                         session_id=f"verification_gen_{item_id}_{datetime.now().timestamp()}",
                         system_message="""You are generating ownership verification questions from secret identification messages.
                         Generate 2-5 specific questions that only the true owner would know.
+                        Focus on details that cannot be guessed by looking at the item.
                         Return ONLY a valid JSON array of strings.
                         Example: ["What color is the tear on the purse?", "Which side has the tear?"]"""
                     )
@@ -1445,47 +1446,105 @@ Return ONLY a JSON array of question strings. Be specific and detailed."""
                         "Where exactly did you lose this item?"
                     ]
             
-            # Second: Perform similarity analysis for ADVISORY purposes only
+            # AUDIT FIX: Comprehensive AI system prompt with structured analysis
+            ai_system_prompt = """You are an AI ADVISORY assistant for a campus lost & found verification system.
+
+CRITICAL RULES:
+1. You are ADVISORY ONLY - you NEVER approve or reject claims
+2. You NEVER make final decisions - only human admins do that
+3. You MUST be conservative - when in doubt, say INSUFFICIENT
+4. You MUST NOT hallucinate or assume facts not provided
+5. You MUST explicitly state what information is missing
+
+CONFIDENCE BANDS (NOT percentages):
+- INSUFFICIENT: Not enough information to assess. Use when:
+  * Key details are missing
+  * Descriptions are too generic (just "phone" or "black bag")
+  * Time/location cannot be verified
+  * No unique identifiers provided
+  
+- LOW: Significant mismatches or weak evidence. Use when:
+  * Product types don't match
+  * Locations are inconsistent
+  * Dates don't align
+  * Generic descriptions only
+
+- MEDIUM: Some alignment but verification needed. Use when:
+  * Product types match
+  * Some details align
+  * But unique identifiers not confirmed
+  * Or some minor inconsistencies exist
+
+- HIGH: Strong evidence alignment. Use ONLY when:
+  * Product type matches exactly
+  * Specific unique identifiers mentioned
+  * Location and time are consistent
+  * Description details align well
+
+GENERIC TERMS TO PENALIZE:
+- Colors alone (black, white, silver) are NOT unique
+- Basic product names (phone, laptop, wallet) are NOT unique
+- Common locations (library, cafeteria) need specifics
+
+EVIDENCE TO VALUE:
+- Serial numbers, model numbers
+- Specific damage (scratches, cracks, tears)
+- Custom modifications (stickers, cases, engravings)
+- Unusual features
+
+Return ONLY valid JSON with this EXACT structure:
+{
+  "internal_score": <0-100>,
+  "confidence_band": "INSUFFICIENT" | "LOW" | "MEDIUM" | "HIGH",
+  "reasoning": "<human-readable summary for admin>",
+  "what_matched": ["list of matching details"],
+  "what_partially_matched": ["details that somewhat align"],
+  "what_did_not_match": ["conflicting or mismatched details"],
+  "missing_information": ["what would help verify ownership"],
+  "inconsistencies": ["time/location/description conflicts"],
+  "recommendation_for_admin": "<specific next steps for admin>"
+}"""
+
             chat = LlmChat(
                 api_key=api_key,
                 session_id=f"claim_analysis_{item_id}_{current_user['sub']}_{datetime.now().timestamp()}",
-                system_message="""You are an AI assistant providing ADVISORY analysis for a campus lost & found system.
-                Your analysis is ADVISORY ONLY - you do NOT make approval decisions.
-                Compare the student's claim details with the found item details.
-                Analyze: product type, description match, identification marks, location proximity, date/time correlation.
-                
-                IMPORTANT: Return a confidence band (LOW, MEDIUM, or HIGH), NOT a percentage.
-                LOW = Many mismatches, inconsistent details
-                MEDIUM = Some matches, needs verification
-                HIGH = Strong matches, details align well
-                
-                Return ONLY a valid JSON object with:
-                {
-                  "internal_score": <number 0-100 for internal use>,
-                  "confidence_band": "LOW" | "MEDIUM" | "HIGH",
-                  "reasoning": "<brief explanation>",
-                  "inconsistencies": ["list of detected inconsistencies if any"]
-                }
-                Be strict and flag any inconsistencies in time/location."""
+                system_message=ai_system_prompt
             )
             
-            prompt = f"""Analyze similarity between this claim and found item:
+            # AUDIT FIX: Structured prompt with all context
+            prompt = f"""Analyze this ownership claim. Be STRICT and CONSERVATIVE.
 
-FOUND ITEM (Already Reported):
-- Type: {item_data['item_keyword']}
+=== FOUND ITEM (Reported by finder) ===
+- Item Type: {item_data['item_keyword']}
 - Description: {item_data['description']}
-- Location: {item_data['location']}
-- Time: {item_data['approximate_time']}
-- Date: {item_data['created_date']}
+- Found Location: {item_data['location']}
+- Found Time: {item_data['approximate_time']}
+- Date Reported: {item_data['created_date']}
+- Item Has Image: {item_data['has_image']}
+- Secret Identifier (from owner): {item_data['secret_message'][:50] + '...' if len(item_data['secret_message']) > 50 else item_data['secret_message']}
 
-STUDENT CLAIM:
-- Product Type: {claim_data['product_type']}
-- Description: {claim_data['description']}
-- Identification Marks: {claim_data['identification_marks']}
-- Lost Location: {claim_data['lost_location']}
-- Approximate Date: {claim_data['approximate_date']}
+=== CLAIM DETAILS (From claimant) ===
+- Claimed Product Type: {claim_data['product_type']}
+- Claimant's Description: {claim_data['description']}
+- Unique Marks Claimed: {claim_data['identification_marks']}
+- Where Claimant Lost It: {claim_data['lost_location']}
+- When Claimant Lost It: {claim_data['approximate_date']}
+- Proof Image Provided: {claim_data['has_proof_image']}
 
-Return JSON with confidence_band (LOW/MEDIUM/HIGH), reasoning, and inconsistencies."""
+=== INPUT QUALITY FLAGS ===
+Description Quality: {claim_data['description_quality']['quality']} - {', '.join(claim_data['description_quality']['flags']) or 'No flags'}
+Identification Marks Quality: {claim_data['marks_quality']['quality']} - {', '.join(claim_data['marks_quality']['flags']) or 'No flags'}
+
+INSTRUCTIONS:
+1. Compare product types - do they match?
+2. Check if locations are geographically consistent
+3. Check if times/dates are consistent
+4. Evaluate uniqueness of identification marks
+5. Check if claimant's details align with secret identifier hints
+6. Penalize generic descriptions heavily
+7. Be CONSERVATIVE - use INSUFFICIENT if evidence is weak
+
+Return the JSON analysis."""
 
             response = chat.send_user_message(UserMessage(content=prompt))
             response_text = response.content.strip()
@@ -1499,19 +1558,23 @@ Return JSON with confidence_band (LOW/MEDIUM/HIGH), reasoning, and inconsistenci
             parsed_response = json.loads(response_text)
             internal_score = parsed_response.get("internal_score", 0)
             
-            # Convert to confidence band if AI returned percentage
-            if "confidence_band" not in parsed_response:
-                confidence_band = get_confidence_band(internal_score)
-            else:
-                confidence_band = parsed_response.get("confidence_band", "LOW")
+            # AUDIT FIX: Always use our band calculation for consistency
+            confidence_band = get_confidence_band(internal_score)
             
+            # AUDIT FIX: Build comprehensive explainable analysis
             ai_analysis = {
                 "confidence_band": confidence_band,
-                "reasoning": parsed_response.get("reasoning", ""),
+                "reasoning": parsed_response.get("reasoning", "Analysis completed"),
+                "what_matched": parsed_response.get("what_matched", []),
+                "what_partially_matched": parsed_response.get("what_partially_matched", []),
+                "what_did_not_match": parsed_response.get("what_did_not_match", []),
+                "missing_information": parsed_response.get("missing_information", []),
                 "inconsistencies": parsed_response.get("inconsistencies", []),
+                "input_quality_flags": claim_data['description_quality']['flags'] + claim_data['marks_quality']['flags'],
+                "recommendation_for_admin": parsed_response.get("recommendation_for_admin", "Please review manually"),
                 "advisory_note": "⚠️ This is ADVISORY ONLY. The admin will review and make the final decision."
             }
-            logging.info(f"AI claim analysis: {ai_analysis}")
+            logging.info(f"AI claim analysis: confidence={confidence_band}, score={internal_score}")
     
     except Exception as e:
         logging.error(f"AI analysis failed: {str(e)}")
