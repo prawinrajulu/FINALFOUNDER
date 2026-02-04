@@ -161,6 +161,9 @@ export const StudentHeader = ({ user, unreadCount = 0 }) => {
             <CollegeLogo />
           </Link>
           <div className="flex items-center gap-4">
+            {/* Role Badge - TOP RIGHT */}
+            <RoleBadge role="student" userName={user?.full_name} />
+            
             <Link 
               to="/student/notifications" 
               className="relative p-2 text-slate-600 hover:text-slate-900"
