@@ -321,6 +321,19 @@ async def startup_event():
     
     # Auto-migrate existing students to folder structure
     await auto_migrate_students_to_folders()
+    
+    # Create indexes for better query performance
+    await db.students.create_index([("department", 1), ("year", 1)])
+    await db.items.create_index([("status", 1), ("item_type", 1)])
+    await db.claims.create_index([("item_id", 1), ("status", 1)])
+    await db.audit_logs.create_index([("timestamp", -1)])
+
+# ===================== HEALTH CHECK =====================
+
+@api_router.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring"""
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 # ===================== PUBLIC LOBBY ENDPOINTS =====================
 
