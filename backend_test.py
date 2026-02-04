@@ -1214,6 +1214,14 @@ class CampusLostFoundTester:
             print("❌ Cannot proceed without admin authentication")
             return False
         
+        # ===================== AI VERIFICATION SYSTEM TESTS =====================
+        print("\n" + "="*70)
+        print("🤖 TESTING AI CLAIM VERIFICATION SYSTEM - COMPREHENSIVE AUDIT")
+        print("="*70)
+        
+        # Run AI verification tests first (most important for this review)
+        self.run_ai_verification_tests()
+        
         # ===================== REDESIGNED SYSTEM TESTS =====================
         print("\n" + "="*60)
         print("🔄 TESTING REDESIGNED CAMPUS LOST & FOUND SYSTEM")
