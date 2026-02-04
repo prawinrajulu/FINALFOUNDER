@@ -171,11 +171,29 @@ const AIClaimChat = () => {
   };
 
   const handleSubmit = async () => {
+    // FIX: Pre-submission validation
+    if (!itemId) {
+      toast.error('No item ID. Please go back and select an item.');
+      return;
+    }
+    
+    if (!item) {
+      toast.error('Item data not loaded. Please refresh and try again.');
+      return;
+    }
+    
+    if (item.item_type !== 'found') {
+      toast.error('This is a LOST item. Claims are only for FOUND items.');
+      navigate('/lobby');
+      return;
+    }
+    
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const formData = new FormData();
       
+      // FIX: Explicit item_id validation before appending
+      console.log('Submitting claim for item_id:', itemId);  // Debug log
       formData.append('item_id', itemId);
       formData.append('product_type', answers.product_type);
       formData.append('description', answers.description);
@@ -200,14 +218,57 @@ const AIClaimChat = () => {
       // Show AI result before navigating
       setTimeout(() => {
         navigate('/student/my-items');
-      }, 3000);
+      }, 5000);
     } catch (error) {
+      console.error('Claim submission error:', error);
       const message = error.response?.data?.detail || 'Failed to submit claim';
       toast.error(message);
+      
+      // If item not found, redirect back
+      if (error.response?.status === 404) {
+        setTimeout(() => navigate('/lobby'), 2000);
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // FIX: Show loading state while validating item
+  if (itemLoading) {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="spinner mb-4" />
+            <p className="text-slate-600">Loading item details...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // FIX: Show error state if item is invalid/unavailable
+  if (itemError) {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="py-8">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Cannot Submit Claim</h3>
+              <p className="text-red-600 mb-6">{itemError}</p>
+              <Button onClick={() => navigate('/lobby')} variant="outline">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Lobby
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (aiResult) {
     // Get confidence band display
