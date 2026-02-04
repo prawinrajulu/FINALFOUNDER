@@ -243,9 +243,25 @@ class FocusedTester:
         """Test 6: Admin decisions should require reason (min 10 chars)"""
         headers = {"Authorization": f"Bearer {self.admin_token}"}
         
+        # If we don't have a claim ID, try to get existing claims
         if not self.test_claim_id:
-            self.log_test("Admin Accountability Tests", False, "No claim ID available")
-            return
+            try:
+                response = requests.get(f"{self.base_url}/claims", headers=headers, timeout=10)
+                if response.status_code == 200:
+                    claims = response.json()
+                    pending_claims = [c for c in claims if c.get("status") == "pending"]
+                    if pending_claims:
+                        self.test_claim_id = pending_claims[0]["id"]
+                        self.log_test("Found Existing Claim for Testing", True, f"Using claim: {self.test_claim_id}")
+                    else:
+                        self.log_test("Admin Accountability Tests", False, "No pending claims available for testing")
+                        return
+                else:
+                    self.log_test("Admin Accountability Tests", False, f"Cannot get claims: {response.status_code}")
+                    return
+            except Exception as e:
+                self.log_test("Admin Accountability Tests", False, f"Error getting claims: {e}")
+                return
 
         # Test without reason (should fail)
         try:
