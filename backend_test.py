@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 from io import BytesIO
 
-class StudentDatabaseTester:
+class CampusLostFoundTester:
     def __init__(self, base_url="https://codecheck-24.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.admin_token = None
