@@ -273,15 +273,17 @@ const AIClaimChat = () => {
   if (aiResult) {
     // Get confidence band display
     const getConfidenceBandDisplay = () => {
-      const band = aiResult.confidence_band || 'LOW';
-      switch (band.toUpperCase()) {
+      const band = (aiResult.confidence_band || 'INSUFFICIENT').toUpperCase();
+      switch (band) {
         case 'HIGH':
-          return { color: 'text-green-600 bg-green-100', label: 'HIGH', icon: '✅' };
+          return { color: 'text-green-600 bg-green-100', label: 'HIGH', icon: '✅', description: 'Strong evidence alignment' };
         case 'MEDIUM':
-          return { color: 'text-amber-600 bg-amber-100', label: 'MEDIUM', icon: '⚠️' };
+          return { color: 'text-amber-600 bg-amber-100', label: 'MEDIUM', icon: '⚠️', description: 'Some alignment, needs verification' };
         case 'LOW':
+          return { color: 'text-red-600 bg-red-100', label: 'LOW', icon: '❌', description: 'Weak evidence or mismatches' };
+        case 'INSUFFICIENT':
         default:
-          return { color: 'text-red-600 bg-red-100', label: 'LOW', icon: '❌' };
+          return { color: 'text-slate-600 bg-slate-100', label: 'INSUFFICIENT', icon: '❓', description: 'Not enough information to assess' };
       }
     };
     
@@ -301,7 +303,7 @@ const AIClaimChat = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* DESIGN FIX: Show confidence band instead of percentage */}
+          {/* Confidence Band Display */}
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-6">
             <div className="text-center mb-4">
               <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-2xl font-bold ${confidenceDisplay.color}`}>
@@ -309,22 +311,84 @@ const AIClaimChat = () => {
                 <span>{confidenceDisplay.label} CONFIDENCE</span>
               </div>
               <p className="text-sm text-slate-500 mt-2">
-                ⚠️ This is an AI advisory analysis only
+                {confidenceDisplay.description}
               </p>
             </div>
             
-            <div className="bg-white rounded-lg p-4 space-y-3">
+            <div className="bg-white rounded-lg p-4 space-y-4">
+              {/* AI Reasoning */}
               <div>
                 <p className="text-sm font-semibold text-slate-700 mb-2">AI Advisory Notes:</p>
                 <p className="text-sm text-slate-600">{aiResult.reasoning}</p>
               </div>
               
+              {/* What Matched */}
+              {aiResult.what_matched && aiResult.what_matched.length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-sm font-semibold text-green-700 mb-2">✅ What Matched:</p>
+                  <ul className="list-disc list-inside text-sm text-green-600 space-y-1">
+                    {aiResult.what_matched.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* What Partially Matched */}
+              {aiResult.what_partially_matched && aiResult.what_partially_matched.length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-sm font-semibold text-amber-700 mb-2">⚡ Partial Matches:</p>
+                  <ul className="list-disc list-inside text-sm text-amber-600 space-y-1">
+                    {aiResult.what_partially_matched.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* What Did Not Match */}
+              {aiResult.what_did_not_match && aiResult.what_did_not_match.length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-sm font-semibold text-red-700 mb-2">❌ Did Not Match:</p>
+                  <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
+                    {aiResult.what_did_not_match.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Missing Information */}
+              {aiResult.missing_information && aiResult.missing_information.length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-sm font-semibold text-slate-700 mb-2">📋 Missing Information:</p>
+                  <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
+                    {aiResult.missing_information.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Inconsistencies */}
               {aiResult.inconsistencies && aiResult.inconsistencies.length > 0 && (
                 <div className="border-t pt-3">
                   <p className="text-sm font-semibold text-amber-700 mb-2">⚠️ Detected Inconsistencies:</p>
                   <ul className="list-disc list-inside text-sm text-amber-600 space-y-1">
                     {aiResult.inconsistencies.map((issue, i) => (
                       <li key={i}>{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Input Quality Flags */}
+              {aiResult.input_quality_flags && aiResult.input_quality_flags.length > 0 && (
+                <div className="border-t pt-3">
+                  <p className="text-sm font-semibold text-slate-500 mb-2">📝 Input Quality Notes:</p>
+                  <ul className="list-disc list-inside text-xs text-slate-500 space-y-1">
+                    {aiResult.input_quality_flags.map((flag, i) => (
+                      <li key={i}>{flag}</li>
                     ))}
                   </ul>
                 </div>
@@ -347,7 +411,7 @@ const AIClaimChat = () => {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
               <strong>What happens next?</strong><br />
-              Your claim has been submitted to the admin team. They will review the AI analysis and your details before making a decision. You'll be notified once they respond.
+              Your claim has been submitted to the admin team. They will review the AI analysis and your details before making a decision. You will be notified once they respond.
             </p>
           </div>
 
