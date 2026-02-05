@@ -268,37 +268,15 @@ export const AdminSidebar = ({ onClose }) => {
 
   return (
     <>
-      {/* Mobile Header with Hamburger */}
-      <div className="mobile-header md:hidden">
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="hamburger-btn"
-          aria-label="Open menu"
-        >
-          <Menu className="w-6 h-6 text-slate-700" />
-        </button>
-        <div className="flex items-center gap-2">
-          <Building2 className="w-5 h-5 text-slate-700" />
-          <span className="font-semibold text-slate-900 text-sm">Admin Panel</span>
-        </div>
-        <div className="w-6" /> {/* Spacer for alignment */}
-      </div>
-
-      {/* Mobile Overlay */}
-      <div 
-        className={`sidebar-overlay ${mobileOpen ? 'open' : ''}`}
-        onClick={() => setMobileOpen(false)}
-      />
-
       {/* Sidebar */}
       <aside 
-        className={`sidebar flex flex-col ${mobileOpen ? 'open' : ''}`} 
+        className="sidebar flex flex-col h-full" 
         data-testid="admin-sidebar"
       >
         {/* Mobile Close Button */}
         <button
-          onClick={() => setMobileOpen(false)}
-          className="md:hidden absolute top-4 right-4 p-1 text-white/70 hover:text-white"
+          onClick={onClose}
+          className="md:hidden absolute top-4 right-4 p-1 text-white/70 hover:text-white z-10"
           aria-label="Close menu"
         >
           <X className="w-5 h-5" />
