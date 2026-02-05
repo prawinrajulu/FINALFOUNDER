@@ -128,6 +128,7 @@ const AdminLostItems = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Image</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Date</TableHead>
@@ -138,7 +139,11 @@ const AdminLostItems = () => {
               </TableHeader>
               <TableBody>
                 {filteredItems.map((item) => (
-                  <TableRow key={item.id} className="table-row-hover" data-testid={`item-row-${item.id}`}>
+                  <TableRow 
+                    key={item.id} 
+                    className={`table-row-hover ${isJewelleryItem(item) ? 'bg-amber-50 border-l-4 border-l-amber-400' : ''}`} 
+                    data-testid={`item-row-${item.id}`}
+                  >
                     <TableCell>
                       <img
                         src={item.image_url ? `${BACKEND_URL}${item.image_url}` : 'https://images.pexels.com/photos/3731256/pexels-photo-3731256.jpeg?auto=compress&cs=tinysrgb&w=100'}
@@ -148,6 +153,17 @@ const AdminLostItems = () => {
                           e.target.src = 'https://images.pexels.com/photos/3731256/pexels-photo-3731256.jpeg?auto=compress&cs=tinysrgb&w=100';
                         }}
                       />
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="outline" 
+                        className={isJewelleryItem(item) ? 'jewellery-badge' : ''}
+                      >
+                        {item.item_keyword || 'Unknown'}
+                      </Badge>
+                      {isJewelleryItem(item) && (
+                        <span className="ml-1 text-xs text-amber-600">⭐</span>
+                      )}
                     </TableCell>
                     <TableCell className="max-w-xs">
                       <p className="truncate">{item.description}</p>
