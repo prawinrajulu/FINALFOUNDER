@@ -1115,14 +1115,7 @@ frontend:
         comment: "Added mobile hamburger menu, overlay, proper sidebar handling for mobile/desktop"
 
 test_plan:
-  current_focus:
-    - "Lost & Found Linking - Backend APIs"
-    - "Lost & Found Linking - Notification on Link"
-    - "Lost & Found Linking - ReportFoundPage UI"
-    - "Found Similar Items - StudentDashboard"
-    - "Student Claim Details View"
-    - "Admin Claim Details Fix"
-    - "Responsive Sidebar - AdminLayout"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
