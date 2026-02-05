@@ -37,13 +37,37 @@ const AdminLostItems = () => {
   const fetchItems = async () => {
     try {
       const response = await itemsAPI.getItems({ item_type: 'lost' });
-      setItems(response.data);
+      // Sort items: Jewellery first, then by date
+      const sortedItems = (response.data || []).sort((a, b) => {
+        const isJewelleryA = isJewelleryItem(a);
+        const isJewelleryB = isJewelleryItem(b);
+        
+        if (isJewelleryA && !isJewelleryB) return -1;
+        if (!isJewelleryA && isJewelleryB) return 1;
+        return 0;
+      });
+      setItems(sortedItems);
     } catch (error) {
       console.error('Failed to fetch items:', error);
       toast.error('Failed to load items');
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Helper function to check if item is Jewellery
+  const isJewelleryItem = (item) => {
+    const keyword = item.item_keyword?.toLowerCase() || '';
+    const description = item.description?.toLowerCase() || '';
+    return keyword === 'jewellery' || 
+           keyword === 'jewelry' ||
+           description.includes('jewellery') ||
+           description.includes('jewelry') ||
+           description.includes('gold') ||
+           description.includes('ring') ||
+           description.includes('necklace') ||
+           description.includes('bracelet') ||
+           description.includes('earring');
   };
 
   const filteredItems = items.filter(item =>
