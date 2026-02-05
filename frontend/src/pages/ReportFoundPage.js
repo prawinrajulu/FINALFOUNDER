@@ -171,9 +171,19 @@ const ReportFoundPage = () => {
       if (image && !noImage) {
         data.append('image', image);
       }
+      
+      // NEW: Link to lost item if selected
+      if (selectedLostItem) {
+        data.append('related_lost_item_id', selectedLostItem.id);
+      }
 
       await itemsAPI.createItem(data);
-      toast.success('Found item reported successfully!');
+      
+      if (selectedLostItem) {
+        toast.success('Found item reported and linked! The owner has been notified.');
+      } else {
+        toast.success('Found item reported successfully!');
+      }
       navigate('/student/my-items');
     } catch (error) {
       const message = error.response?.data?.detail || 'Failed to report item';
