@@ -316,7 +316,7 @@ export const ItemCard = ({
           
           {/* LOST items: "I Found This Item" button - for non-owners only */}
           {showClaimButton && !isOwner && item.item_type === 'lost' && isActive && (
-            <div className="mt-4 pt-3 border-t border-slate-100">
+            <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
               <Button 
                 className="w-full bg-orange-600 hover:bg-orange-700"
                 size="sm"
@@ -325,6 +325,17 @@ export const ItemCard = ({
               >
                 <Search className="w-4 h-4 mr-2" />
                 I Found This Item
+              </Button>
+              {/* NEW: Link to report found page with pre-filled link */}
+              <Button 
+                variant="outline"
+                className="w-full border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                size="sm"
+                onClick={() => navigate(`/student/report-found?linkTo=${item.id}`)}
+                data-testid={`report-found-link-${item.id}`}
+              >
+                <Package className="w-4 h-4 mr-2" />
+                Report Found Item (Link to This)
               </Button>
             </div>
           )}
