@@ -227,10 +227,16 @@ export const ItemCard = ({
           <NoImagePlaceholder 
             className={`item-card-image ${item.image_url ? 'hidden' : 'flex'}`}
           />
-          <div className="absolute top-2 left-2">
+          <div className="absolute top-2 left-2 flex items-center gap-1">
             <Badge className={statusColors[item.status] || statusColors.active}>
               {item.item_type === 'lost' ? 'LOST' : 'FOUND'}
             </Badge>
+            {/* Jewellery Priority Badge */}
+            {isJewellery && item.item_type === 'lost' && (
+              <span className="jewellery-priority-indicator">
+                ⭐ HIGH PRIORITY
+              </span>
+            )}
           </div>
           {item.status === 'claimed' && (
             <div className="absolute top-2 right-2">
@@ -243,8 +249,11 @@ export const ItemCard = ({
         <div className="p-4">
           {/* Item Keyword/Type */}
           {item.item_keyword && (
-            <div className="mb-2">
-              <Badge variant="outline" className="text-xs">
+            <div className="mb-2 flex items-center gap-2">
+              <Badge 
+                variant="outline" 
+                className={`text-xs ${isJewellery && item.item_type === 'lost' ? 'jewellery-badge' : ''}`}
+              >
                 {safeString(item.item_keyword)}
               </Badge>
             </div>
