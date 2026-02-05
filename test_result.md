@@ -938,3 +938,165 @@ test_plan:
       
       READY FOR FRONTEND TESTING (pending user approval)
 
+  - agent: "main"
+    message: |
+      ✅ IMPLEMENTED 4 NEW REQUIREMENTS:
+      
+      1. LOST & FOUND LINKING LOGIC (Backend + Frontend):
+         - Added `related_lost_item_id` field to items collection
+         - New API: GET /api/items/lost/matching - Find matching lost items
+         - New API: GET /api/items/found-similar - Get found items linked to user's lost items
+         - When found item is linked, notification is sent to lost item owner
+         - ReportFoundPage now supports linking to lost items via URL param (?linkTo=itemId)
+         - ItemCard has new "Report Found Item (Link to This)" button for lost items
+         
+      2. FULL APPLICATION RESPONSIVENESS & OVERFLOW AUDIT:
+         - AdminLayout updated with mobile hamburger menu and overlay
+         - AdminSidebar now receives onClose prop for mobile handling
+         - Added comprehensive CSS for sidebar responsiveness
+         - Mobile: Sidebar hidden by default, opens as overlay
+         - Desktop: Sidebar remains visible and fixed
+         - Added overflow protection styles in index.css
+         
+      3. STUDENT "MY CLAIM STATUS" - DETAILED VIEW:
+         - Added "View Details" (Eye icon) button to each claim in StudentDashboard
+         - New ClaimDetailDialog showing:
+           * Claimed item details
+           * Claim submission date
+           * Status badge
+           * Student's submitted answers (from qa_data or claim_data)
+           * Admin's response/decision with reason
+         - Read-only view for students
+         - Shows "Your claim is under review" if admin hasn't responded
+         
+      4. ADMIN/SUPER ADMIN CLAIM DETAILS FIX:
+         - Fixed ClaimDetailDialog in AdminClaimRequests.js
+         - Now displays student's qa_data as numbered list of answers
+         - Falls back to claim_data if qa_data is empty
+         - Does NOT show AI questions or system prompts
+         - Fixed admin_decision display (handles object vs string)
+         - Human-readable, cleanly formatted output
+      
+      FILES MODIFIED:
+      - /app/backend/server.py (Added linking logic, new APIs)
+      - /app/frontend/src/services/api.js (Added new API calls)
+      - /app/frontend/src/pages/ReportFoundPage.js (Link to lost item UI)
+      - /app/frontend/src/pages/StudentDashboard.js (Found Similar Items + Claim Details)
+      - /app/frontend/src/pages/AdminLayout.js (Mobile responsiveness)
+      - /app/frontend/src/components/AdminSidebar.js (Mobile handling)
+      - /app/frontend/src/components/ItemCard.js (Link button for lost items)
+      - /app/frontend/src/pages/AdminClaimRequests.js (Fixed claim details display)
+      - /app/frontend/src/index.css (Responsive sidebar styles)
+
+backend:
+  - task: "Lost & Found Linking - Backend APIs"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added related_lost_item_id field to items, GET /api/items/lost/matching, GET /api/items/found-similar, notification on link"
+
+  - task: "Lost & Found Linking - Notification on Link"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "When found item is created with related_lost_item_id, notification sent to lost item owner via messages collection"
+
+frontend:
+  - task: "Lost & Found Linking - ReportFoundPage UI"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/ReportFoundPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added Link to Lost Item section with search and selection. Supports URL param ?linkTo=itemId"
+
+  - task: "Found Similar Items - StudentDashboard"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/StudentDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added Found Similar Items section showing found items linked to user's lost items"
+
+  - task: "Student Claim Details View"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/StudentDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added View Details button and ClaimDetailDialog showing claim info, status, answers, admin response"
+
+  - task: "Admin Claim Details Fix"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/AdminClaimRequests.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed ClaimDetailDialog to show qa_data as numbered answers list, fallback to claim_data"
+
+  - task: "Responsive Sidebar - AdminLayout"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/AdminLayout.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added mobile hamburger menu, overlay, proper sidebar handling for mobile/desktop"
+
+test_plan:
+  current_focus:
+    - "Lost & Found Linking - Backend APIs"
+    - "Lost & Found Linking - Notification on Link"
+    - "Lost & Found Linking - ReportFoundPage UI"
+    - "Found Similar Items - StudentDashboard"
+    - "Student Claim Details View"
+    - "Admin Claim Details Fix"
+    - "Responsive Sidebar - AdminLayout"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: |
+      All 4 requirements implemented. Ready for backend testing.
+      
+      Test scenarios needed:
+      1. Create found item with related_lost_item_id
+      2. Verify notification created for lost item owner
+      3. Test GET /api/items/lost/matching endpoint
+      4. Test GET /api/items/found-similar endpoint
+      5. Test claim detail display in admin panel (qa_data)
+
+
