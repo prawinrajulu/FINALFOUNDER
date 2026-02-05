@@ -1021,6 +1021,7 @@ async def get_public_items(current_user: dict = Depends(get_current_user)):
     """
     Shows all items with ownership flag for proper claim visibility.
     FIX #3: Ownership check to hide invalid actions.
+    NEW: Jewellery items appear first (HIGH PRIORITY) for lost items.
     """
     items = await db.items.find(
         {"is_deleted": False, "status": {"$in": ["reported", "active", "found_reported"]}},
@@ -1030,9 +1031,27 @@ async def get_public_items(current_user: dict = Depends(get_current_user)):
     user_id = current_user.get("sub")
     user_role = current_user.get("role", "student")
     
+    # Helper function to check if item is Jewellery (HIGH PRIORITY)
+    def is_jewellery(item):
+        keyword = (item.get("item_keyword") or "").lower()
+        description = (item.get("description") or "").lower()
+        return (
+            keyword in ["jewellery", "jewelry"] or
+            "jewellery" in description or
+            "jewelry" in description or
+            "gold" in description or
+            "ring" in description or
+            "necklace" in description or
+            "bracelet" in description or
+            "earring" in description
+        )
+    
     for item in items:
         # FIX #3: Add ownership flag - owners should NOT see claim button
         item["is_owner"] = (item.get("student_id") == user_id) if user_role == "student" else False
+        
+        # Add jewellery priority flag
+        item["is_jewellery"] = is_jewellery(item)
         
         # Get safe student info
         student = await db.students.find_one(
@@ -1045,6 +1064,13 @@ async def get_public_items(current_user: dict = Depends(get_current_user)):
         if user_role == "student" and not item["is_owner"]:
             item.pop("student_id", None)
             item.pop("secret_message", None)
+    
+    # Sort: Jewellery lost items first, then others
+    # Stable sort: within each category, maintain created_at order
+    items.sort(key=lambda x: (
+        0 if (x.get("item_type") == "lost" and x.get("is_jewellery")) else 1,
+        x.get("item_type", ""),  # Group by type
+    ))
     
     return items
 
