@@ -1131,9 +1131,11 @@ frontend:
 
 test_plan:
   current_focus:
-    - "Responsive Sidebar - AdminLayout"
-    - "Jewellery Priority & Gold Highlight"
-  stuck_tasks: []
+    - "Jewellery Priority Backend Implementation"
+    - "Claims QA Data Structure"
+    - "Admin Decision Reason Storage"
+  stuck_tasks:
+    - "Jewellery Priority Backend Implementation"
   test_all: false
   test_priority: "high_first"
 
