@@ -122,7 +122,7 @@ const StudentDashboard = () => {
           ) : recentItems.length === 0 ? (
             <div className="text-center py-8">
               <Package className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-500">You haven't reported any items yet</p>
+              <p className="text-slate-500">You have not reported any items yet</p>
               <Link to="/student/report-lost">
                 <Button className="mt-4" size="sm">
                   <Plus className="w-4 h-4 mr-2" />
