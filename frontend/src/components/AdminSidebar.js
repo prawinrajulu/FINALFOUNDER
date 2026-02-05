@@ -169,7 +169,7 @@ const SidebarContent = ({
   </>
 );
 
-export const AdminSidebar = () => {
+export const AdminSidebar = ({ onClose }) => {
   const { logout, isSuperAdmin, user, token } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -178,7 +178,6 @@ export const AdminSidebar = () => {
   const [viewedCounts, setViewedCounts] = useState({ lost: 0, found: 0, claims: 0 });
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Fetch all counts
   const fetchCounts = useCallback(async () => {
