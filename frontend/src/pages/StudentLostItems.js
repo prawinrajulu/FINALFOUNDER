@@ -81,12 +81,23 @@ const StudentLostItems = () => {
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = items.filter(item =>
+    let filtered = items.filter(item =>
       item.description?.toLowerCase().includes(query) ||
       item.location?.toLowerCase().includes(query) ||
       item.item_keyword?.toLowerCase().includes(query) ||
       item.created_date?.includes(query)
     );
+    
+    // Maintain Jewellery priority in filtered results
+    filtered = filtered.sort((a, b) => {
+      const isJewelleryA = isJewelleryItem(a);
+      const isJewelleryB = isJewelleryItem(b);
+      
+      if (isJewelleryA && !isJewelleryB) return -1;
+      if (!isJewelleryA && isJewelleryB) return 1;
+      return 0;
+    });
+    
     setFilteredItems(filtered);
   };
 
