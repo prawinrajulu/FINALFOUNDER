@@ -323,6 +323,119 @@ const ReportFoundPage = () => {
               </p>
             </div>
 
+            {/* NEW: Link to Lost Item Section */}
+            <div className="space-y-3 bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-blue-900 font-semibold flex items-center gap-2">
+                  <Link2 className="w-4 h-4" />
+                  Link to Lost Item (Optional)
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowLinkSection(!showLinkSection)}
+                  className="text-blue-600 border-blue-200 hover:bg-blue-100"
+                >
+                  {showLinkSection ? 'Hide' : 'Show'}
+                </Button>
+              </div>
+              
+              <p className="text-xs text-blue-700">
+                If you think this item belongs to someone who reported it as lost, you can link it to notify them automatically.
+              </p>
+              
+              {showLinkSection && (
+                <div className="space-y-3 pt-2">
+                  {/* Selected Lost Item */}
+                  {selectedLostItem ? (
+                    <div className="bg-white border border-blue-300 rounded-lg p-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className="bg-orange-100 text-orange-700 text-xs">LOST</Badge>
+                            <span className="font-medium text-sm">{selectedLostItem.item_keyword}</span>
+                          </div>
+                          <p className="text-xs text-slate-600 line-clamp-2">{selectedLostItem.description}</p>
+                          <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                            <MapPin className="w-3 h-3" />
+                            <span>{selectedLostItem.location}</span>
+                          </div>
+                          {selectedLostItem.student && (
+                            <div className="flex items-center gap-1 mt-1 text-xs text-slate-500">
+                              <User className="w-3 h-3" />
+                              <span>Reported by: {selectedLostItem.student.full_name}</span>
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedLostItem(null)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-green-600 mt-2 font-medium">
+                        ✓ This lost item will be linked when you submit
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Search Button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={searchMatchingLostItems}
+                        disabled={searchingLost || !formData.item_keyword}
+                        className="w-full border-blue-200 text-blue-700 hover:bg-blue-100"
+                      >
+                        {searchingLost ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+                            Searching...
+                          </>
+                        ) : (
+                          <>
+                            <Search className="w-4 h-4 mr-2" />
+                            Search Matching Lost Items
+                          </>
+                        )}
+                      </Button>
+                      
+                      {/* Matching Lost Items List */}
+                      {matchingLostItems.length > 0 && (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          <p className="text-xs font-medium text-blue-800">
+                            Found {matchingLostItems.length} matching lost item(s):
+                          </p>
+                          {matchingLostItems.map((lostItem) => (
+                            <div
+                              key={lostItem.id}
+                              onClick={() => setSelectedLostItem(lostItem)}
+                              className="bg-white border border-slate-200 rounded-lg p-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge className="bg-orange-100 text-orange-700 text-xs">LOST</Badge>
+                                <span className="font-medium text-sm">{lostItem.item_keyword}</span>
+                              </div>
+                              <p className="text-xs text-slate-600 line-clamp-1">{lostItem.description}</p>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
+                                <MapPin className="w-3 h-3" />
+                                <span className="truncate">{lostItem.location}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Image Upload - OPTIONAL */}
             <div className="space-y-3">
               <Label>Item Image (Optional)</Label>
