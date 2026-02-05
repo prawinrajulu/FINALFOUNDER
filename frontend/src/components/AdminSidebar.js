@@ -250,7 +250,7 @@ export const AdminSidebar = ({ onClose }) => {
   };
 
   const handleNavClick = () => {
-    setMobileOpen(false);
+    if (onClose) onClose();
   };
 
   const navItems = [
