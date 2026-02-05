@@ -304,25 +304,65 @@ const ClaimDetailDialog = memo(({ claim, open, onClose, onDecision }) => {
               </div>
             )}
 
-            {/* Claim Details */}
+            {/* Claim Details - FIXED: Show student's submitted answers */}
             <div className="space-y-3">
               <h4 className="font-medium text-slate-800 flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                Claim Details
+                Student's Submitted Answers
               </h4>
               <Card>
                 <CardContent className="p-4 space-y-3">
-                  {claim.claim_details && (
+                  {/* Display qa_data (Q&A from chatbot) - ONLY ANSWERS, numbered list */}
+                  {claim.qa_data && claim.qa_data.length > 0 ? (
                     <div>
-                      <p className="text-xs font-medium text-slate-500 mb-1">Claimant's Statement</p>
-                      <p className="text-sm text-slate-700">{claim.claim_details}</p>
+                      <p className="text-xs font-medium text-slate-500 mb-2">Verification Responses</p>
+                      <ol className="space-y-2 list-decimal list-inside">
+                        {claim.qa_data
+                          .filter(qa => qa.answer && qa.answer.trim() && qa.answer !== 'null')
+                          .map((qa, index) => (
+                            <li key={index} className="text-sm text-slate-700 leading-relaxed">
+                              <span className="font-medium">{qa.answer}</span>
+                            </li>
+                          ))}
+                      </ol>
                     </div>
-                  )}
-                  {claim.proof_of_ownership && (
-                    <div>
-                      <p className="text-xs font-medium text-slate-500 mb-1">Proof Provided</p>
-                      <p className="text-sm text-slate-700">{claim.proof_of_ownership}</p>
+                  ) : claim.claim_data ? (
+                    /* Fallback: Display claim_data if qa_data is empty */
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-slate-500 mb-2">Claim Information</p>
+                      {claim.claim_data.description && (
+                        <div className="text-sm">
+                          <span className="text-slate-500">1. Item Description: </span>
+                          <span className="text-slate-700 font-medium">{claim.claim_data.description}</span>
+                        </div>
+                      )}
+                      {claim.claim_data.product_type && (
+                        <div className="text-sm">
+                          <span className="text-slate-500">2. Product Type: </span>
+                          <span className="text-slate-700 font-medium">{claim.claim_data.product_type}</span>
+                        </div>
+                      )}
+                      {claim.claim_data.identification_marks && (
+                        <div className="text-sm">
+                          <span className="text-slate-500">3. Identification Marks: </span>
+                          <span className="text-slate-700 font-medium">{claim.claim_data.identification_marks}</span>
+                        </div>
+                      )}
+                      {claim.claim_data.lost_location && (
+                        <div className="text-sm">
+                          <span className="text-slate-500">4. Lost Location: </span>
+                          <span className="text-slate-700 font-medium">{claim.claim_data.lost_location}</span>
+                        </div>
+                      )}
+                      {claim.claim_data.approximate_date && (
+                        <div className="text-sm">
+                          <span className="text-slate-500">5. Approximate Date: </span>
+                          <span className="text-slate-700 font-medium">{claim.claim_data.approximate_date}</span>
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <p className="text-sm text-slate-500 italic">No claim details available</p>
                   )}
                 </CardContent>
               </Card>
