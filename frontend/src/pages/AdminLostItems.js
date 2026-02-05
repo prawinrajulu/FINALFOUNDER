@@ -124,6 +124,7 @@ const AdminLostItems = () => {
               <p className="text-slate-500">No lost items found</p>
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
