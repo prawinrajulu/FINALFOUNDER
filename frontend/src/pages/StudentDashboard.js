@@ -6,13 +6,21 @@ import { ItemGrid } from '../components/ItemCard';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Search, Package, Plus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Search, Package, Plus, AlertCircle, CheckCircle2, Eye, MapPin, Clock, User, Sparkles, Link2 } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const StudentDashboard = () => {
   const { user } = useAuth();
   const [recentItems, setRecentItems] = useState([]);
   const [myClaims, setMyClaims] = useState([]);
+  const [foundSimilarItems, setFoundSimilarItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // NEW: Claim detail dialog state
+  const [selectedClaim, setSelectedClaim] = useState(null);
+  const [showClaimDetail, setShowClaimDetail] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -20,12 +28,14 @@ const StudentDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [itemsRes, claimsRes] = await Promise.all([
+      const [itemsRes, claimsRes, foundSimilarRes] = await Promise.all([
         itemsAPI.getMyItems(),
-        claimsAPI.getClaims()
+        claimsAPI.getClaims(),
+        itemsAPI.getFoundSimilarItems().catch(() => ({ data: { found_similar: [] } }))
       ]);
       setRecentItems(itemsRes.data.slice(0, 4));
       setMyClaims(claimsRes.data.slice(0, 3));
+      setFoundSimilarItems(foundSimilarRes.data?.found_similar || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -41,6 +51,12 @@ const StudentDashboard = () => {
       case 'under_review': return 'status-claimed';
       default: return 'bg-slate-100 text-slate-600';
     }
+  };
+
+  // Open claim detail dialog
+  const openClaimDetail = (claim) => {
+    setSelectedClaim(claim);
+    setShowClaimDetail(true);
   };
 
   return (
