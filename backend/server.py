@@ -820,6 +820,7 @@ async def create_item(
         "is_deleted": False,
         "delete_reason": None,
         "deleted_at": None,
+        "related_lost_item_id": related_lost_item_id,  # NEW: Link to lost item (for found items)
         "created_at": now.isoformat(),
         "created_date": now.strftime("%Y-%m-%d"),
         "created_time": now.strftime("%H:%M:%S"),
@@ -836,6 +837,39 @@ async def create_item(
     }
     
     await db.items.insert_one(item)
+    
+    # NEW: If found item is linked to a lost item, send notification to lost item owner
+    if related_lost_item_id and item_type == "found":
+        lost_item = await db.items.find_one({"id": related_lost_item_id, "item_type": "lost"})
+        if lost_item:
+            # Create notification for lost item owner
+            notification_message = f"Good news! Someone may have found your lost {lost_item.get('item_keyword', 'item')}. Check your 'Found Similar Items' section."
+            await db.messages.insert_one({
+                "id": str(uuid.uuid4()),
+                "sender_id": "system",
+                "sender_type": "system",
+                "recipient_id": lost_item["student_id"],
+                "recipient_type": "student",
+                "content": notification_message,
+                "item_id": lost_item["id"],
+                "related_found_item_id": item_id,  # Link to the found item
+                "is_read": False,
+                "notification_type": "found_similar",
+                "created_at": now.isoformat()
+            })
+            
+            # Update lost item status to indicate potential match found
+            await db.items.update_one(
+                {"id": related_lost_item_id},
+                {
+                    "$set": {"has_potential_match": True},
+                    "$push": {"potential_matches": {
+                        "found_item_id": item_id,
+                        "matched_at": now.isoformat(),
+                        "matched_by": current_user["sub"]
+                    }}
+                }
+            )
     
     # Log audit
     await db.audit_logs.insert_one({
