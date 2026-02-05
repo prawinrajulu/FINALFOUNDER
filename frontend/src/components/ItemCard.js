@@ -193,10 +193,24 @@ export const ItemCard = ({
   };
 
   const isActive = item.status === 'active' || item.status === 'reported';
+  
+  // Check if item is Jewellery for priority highlighting
+  const isJewellery = item.item_keyword?.toLowerCase() === 'jewellery' || 
+                      item.item_keyword?.toLowerCase() === 'jewelry' ||
+                      item.description?.toLowerCase().includes('jewellery') ||
+                      item.description?.toLowerCase().includes('jewelry') ||
+                      item.description?.toLowerCase().includes('gold') ||
+                      item.description?.toLowerCase().includes('ring') ||
+                      item.description?.toLowerCase().includes('necklace') ||
+                      item.description?.toLowerCase().includes('bracelet') ||
+                      item.description?.toLowerCase().includes('earring');
 
   return (
     <>
-      <div className="item-card animate-fade-in" data-testid={`item-card-${item.id}`}>
+      <div 
+        className={`item-card animate-fade-in ${isJewellery && item.item_type === 'lost' ? 'item-card-jewellery' : ''}`} 
+        data-testid={`item-card-${item.id}`}
+      >
         {/* Image Section */}
         <div className="relative">
           {item.image_url ? (
