@@ -764,6 +764,7 @@ async def create_item(
     approximate_time: str = Form(...),
     secret_message: str = Form(...),  # Mandatory secret identification message
     image: Optional[UploadFile] = File(None),  # CHANGED: Image is now OPTIONAL
+    related_lost_item_id: Optional[str] = Form(None),  # NEW: Link found item to lost item
     current_user: dict = Depends(require_student)
 ):
     if item_type not in ["lost", "found"]:
