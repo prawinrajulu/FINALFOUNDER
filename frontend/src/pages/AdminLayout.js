@@ -19,7 +19,7 @@ const AdminLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      {/* Mobile Overlay - Always mounted, visibility controlled by opacity */}
+      {/* Mobile Overlay - z-40, below sidebar */}
       <div 
         className={`
           fixed inset-0 bg-black/50 z-40 md:hidden
@@ -30,12 +30,15 @@ const AdminLayout = () => {
         aria-hidden={!sidebarOpen}
       />
       
-      {/* Sidebar - ALWAYS mounted in DOM, visibility controlled by transform */}
-      <div className={`
-        fixed md:static inset-y-0 left-0 z-50
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
+      {/* Sidebar Container - z-50, ABOVE overlay */}
+      <div 
+        className={`
+          fixed md:static inset-y-0 left-0 z-50
+          transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
+        style={{ zIndex: 50 }}
+      >
         <AdminSidebar onClose={handleCloseSidebar} />
       </div>
       
