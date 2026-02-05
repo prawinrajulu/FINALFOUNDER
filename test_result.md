@@ -1113,14 +1113,58 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Added mobile hamburger menu, overlay, proper sidebar handling for mobile/desktop"
+      - working: "NA"
+        agent: "main"
+        comment: "FIXED: Updated sidebar CSS for proper mobile slide-in (75vw width), improved overlay, scrollable tables"
+
+  - task: "Jewellery Priority & Gold Highlight"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/StudentLostItems.js, AdminLostItems.js, ItemCard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added Jewellery sorting (first), gold card styling, priority badge, admin table highlight"
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Responsive Sidebar - AdminLayout"
+    - "Jewellery Priority & Gold Highlight"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
+  - agent: "main"
+    message: |
+      IMPLEMENTED NEW REQUIREMENTS:
+      
+      1. ADMIN SIDEBAR RESPONSIVE FIX:
+         - Updated CSS: Mobile sidebar width = 75vw (partial, not full)
+         - Slide-in animation with transform
+         - Overlay backdrop for outside click to close
+         - X button visible at top-right
+         - Table scrollable wrapper added for AdminLostItems
+         
+      2. JEWELLERY PRIORITY & GOLD HIGHLIGHT:
+         - Added "Jewellery" to ITEM_KEYWORDS (first position)
+         - Sorting: Jewellery items appear FIRST in lost items lists
+         - Gold styling: Border, gradient background, gold badge
+         - HIGH PRIORITY badge on jewellery cards
+         - Admin table: Gold row highlight with left border
+         
+      Files modified:
+      - index.css (sidebar CSS, jewellery styles)
+      - AdminLayout.js (already had hamburger)
+      - AdminSidebar.js (already had close button)
+      - ItemCard.js (jewellery detection, gold styling)
+      - StudentLostItems.js (sorting, filtering)
+      - AdminLostItems.js (sorting, table highlight, scrollable wrapper)
+      - ReportLostPage.js (added Jewellery keyword)
+      - ReportFoundPage.js (added Jewellery keyword)
   - agent: "testing"
     message: |
       🎉 LOST & FOUND LINKING BACKEND TESTING COMPLETE - 100% SUCCESS RATE!
