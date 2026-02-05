@@ -222,11 +222,13 @@ code, .mono {
         width: 75vw;
         max-width: 280px;
         min-width: 240px;
-        position: fixed;
+        /* Position relative to wrapper, not fixed */
+        position: relative;
         top: 0;
         left: 0;
         height: 100vh;
-        z-index: 50;
+        /* Ensure sidebar content is above everything */
+        z-index: 51;
     }
     
     /* Main container should not overflow */
