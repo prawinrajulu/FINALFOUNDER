@@ -53,7 +53,10 @@ export const itemsAPI = {
   deleteItem: (id, reason) => api.delete(`/items/${id}`, { data: { reason } }),
   getDeletedItems: () => api.get('/items/deleted/all'),
   restoreItem: (id) => api.post(`/items/${id}/restore`),
-  permanentDeleteItem: (id) => api.delete(`/items/${id}/permanent`)
+  permanentDeleteItem: (id) => api.delete(`/items/${id}/permanent`),
+  // NEW: Lost & Found Linking APIs
+  getMatchingLostItems: (keyword, location) => api.get('/items/lost/matching', { params: { keyword, location } }),
+  getFoundSimilarItems: () => api.get('/items/found-similar')
 };
 
 // Claims APIs
