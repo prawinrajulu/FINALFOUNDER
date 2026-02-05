@@ -377,10 +377,14 @@ const ClaimDetailDialog = memo(({ claim, open, onClose, onDecision }) => {
                 </h4>
                 <Card className={claim.status === 'approved' ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}>
                   <CardContent className="p-4">
-                    <p className="text-sm text-slate-700">{claim.admin_decision}</p>
-                    {claim.decided_at && (
+                    <p className="text-sm text-slate-700">
+                      {typeof claim.admin_decision === 'object' 
+                        ? claim.admin_decision.reason 
+                        : claim.admin_decision}
+                    </p>
+                    {(claim.decided_at || claim.admin_decision?.decided_at) && (
                       <p className="text-xs text-slate-500 mt-2">
-                        Decision made on {format(new Date(claim.decided_at), 'MMM d, yyyy • h:mm a')}
+                        Decision made on {format(new Date(claim.decided_at || claim.admin_decision?.decided_at), 'MMM d, yyyy • h:mm a')}
                       </p>
                     )}
                   </CardContent>
