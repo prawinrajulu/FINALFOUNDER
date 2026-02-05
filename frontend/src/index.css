@@ -284,6 +284,51 @@ code, .mono {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* Jewellery Priority Gold Highlight */
+.item-card-jewellery {
+    border: 2px solid #d4a853;
+    background: linear-gradient(135deg, #fffef5 0%, #fff9e6 100%);
+    position: relative;
+}
+
+.item-card-jewellery::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #d4a853 0%, #f4d03f 50%, #d4a853 100%);
+    z-index: 1;
+}
+
+.item-card-jewellery:hover {
+    box-shadow: 0 4px 16px rgba(212, 168, 83, 0.3);
+    border-color: #c9a227;
+}
+
+/* Jewellery badge styling */
+.jewellery-badge {
+    background: linear-gradient(135deg, #d4a853 0%, #f4d03f 100%);
+    color: #5c4813;
+    font-weight: 600;
+    border: 1px solid #c9a227;
+}
+
+/* Priority indicator for jewellery */
+.jewellery-priority-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #d4a853;
+    border-radius: 9999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #92400e;
+}
+
 .item-card-image {
     width: 100%;
     height: 160px;
