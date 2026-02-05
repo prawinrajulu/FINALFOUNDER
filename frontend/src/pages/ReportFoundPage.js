@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { itemsAPI } from '../services/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,8 +7,9 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
-import { Package, Upload, MapPin, Clock, ArrowLeft, Tag, ImageOff, X } from 'lucide-react';
+import { Package, Upload, MapPin, Clock, ArrowLeft, Tag, ImageOff, X, Link2, Search, User } from 'lucide-react';
 
 const ITEM_KEYWORDS = [
   'Phone',
@@ -31,6 +32,9 @@ const TIME_SLOTS = [
 
 const ReportFoundPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const linkedLostItemId = searchParams.get('linkTo'); // Get linked lost item ID from URL
+  
   const [formData, setFormData] = useState({
     item_keyword: '',
     custom_keyword: '',
@@ -41,8 +45,61 @@ const ReportFoundPage = () => {
   });
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [noImage, setNoImage] = useState(false);  // NEW: "I don't have an image" checkbox
+  const [noImage, setNoImage] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // NEW: Lost item linking state
+  const [showLinkSection, setShowLinkSection] = useState(false);
+  const [matchingLostItems, setMatchingLostItems] = useState([]);
+  const [selectedLostItem, setSelectedLostItem] = useState(null);
+  const [searchingLost, setSearchingLost] = useState(false);
+
+  // Load linked lost item if provided in URL
+  useEffect(() => {
+    if (linkedLostItemId) {
+      loadLinkedLostItem(linkedLostItemId);
+    }
+  }, [linkedLostItemId]);
+
+  const loadLinkedLostItem = async (lostItemId) => {
+    try {
+      const response = await itemsAPI.getMatchingLostItems();
+      const lostItem = response.data.find(item => item.id === lostItemId);
+      if (lostItem) {
+        setSelectedLostItem(lostItem);
+        setShowLinkSection(true);
+        // Pre-fill form with lost item info
+        if (lostItem.item_keyword) {
+          setFormData(prev => ({ ...prev, item_keyword: lostItem.item_keyword }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load linked lost item:', error);
+    }
+  };
+
+  // Search for matching lost items
+  const searchMatchingLostItems = async () => {
+    const keyword = formData.item_keyword === 'Others' ? formData.custom_keyword : formData.item_keyword;
+    if (!keyword) {
+      toast.error('Please select an item type first');
+      return;
+    }
+    
+    setSearchingLost(true);
+    try {
+      const response = await itemsAPI.getMatchingLostItems(keyword, formData.location);
+      setMatchingLostItems(response.data || []);
+      if (response.data?.length === 0) {
+        toast.info('No matching lost items found');
+      }
+    } catch (error) {
+      console.error('Failed to search lost items:', error);
+      toast.error('Failed to search for matching lost items');
+    } finally {
+      setSearchingLost(false);
+    }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
