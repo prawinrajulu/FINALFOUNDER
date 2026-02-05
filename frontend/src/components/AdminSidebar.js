@@ -279,13 +279,13 @@ export const AdminSidebar = ({ onClose }) => {
         className="sidebar flex flex-col h-full" 
         data-testid="admin-sidebar"
       >
-        {/* Mobile Close Button */}
+        {/* Mobile Close Button - Ensure it's above sidebar content */}
         <button
           onClick={onClose}
-          className="md:hidden absolute top-4 right-4 p-1 text-white/70 hover:text-white z-10"
+          className="md:hidden absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg z-[60] transition-colors"
           aria-label="Close menu"
         >
-          <X className="w-5 h-5" />
+          <X className="w-6 h-6" />
         </button>
 
         <SidebarContent
