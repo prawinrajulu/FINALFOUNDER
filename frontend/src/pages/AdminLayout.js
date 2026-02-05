@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AdminSidebar } from '../components/AdminSidebar';
 import { Toaster } from '../components/ui/sonner';
@@ -7,24 +7,36 @@ import { Button } from '../components/ui/button';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Stabilize the callback to prevent unnecessary re-renders
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarOpen(false);
+  }, []);
+  
+  const handleOpenSidebar = useCallback(() => {
+    setSidebarOpen(true);
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* Mobile Overlay - Always mounted, visibility controlled by opacity */}
+      <div 
+        className={`
+          fixed inset-0 bg-black/50 z-40 md:hidden
+          transition-opacity duration-300 ease-in-out
+          ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+        `}
+        onClick={handleCloseSidebar}
+        aria-hidden={!sidebarOpen}
+      />
       
-      {/* Sidebar - Hidden on mobile by default, overlay when open */}
+      {/* Sidebar - ALWAYS mounted in DOM, visibility controlled by transform */}
       <div className={`
         fixed md:static inset-y-0 left-0 z-50
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        <AdminSidebar onClose={() => setSidebarOpen(false)} />
+        <AdminSidebar onClose={handleCloseSidebar} />
       </div>
       
       {/* Main Content Area */}
@@ -34,7 +46,7 @@ const AdminLayout = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setSidebarOpen(true)}
+            onClick={handleOpenSidebar}
             className="p-2"
             aria-label="Open menu"
           >
