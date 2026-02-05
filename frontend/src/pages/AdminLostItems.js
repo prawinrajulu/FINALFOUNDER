@@ -71,11 +71,19 @@ const AdminLostItems = () => {
   };
 
   const filteredItems = items.filter(item =>
-    item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.location?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.student?.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.student?.roll_number?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    item.student?.roll_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.item_keyword?.toLowerCase().includes(searchQuery.toLowerCase())
+  ).sort((a, b) => {
+    // Maintain Jewellery priority even after filtering
+    const isJewelleryA = isJewelleryItem(a);
+    const isJewelleryB = isJewelleryItem(b);
+    if (isJewelleryA && !isJewelleryB) return -1;
+    if (!isJewelleryA && isJewelleryB) return 1;
+    return 0;
+  });
 
   const getStatusBadge = (status) => {
     switch (status) {
