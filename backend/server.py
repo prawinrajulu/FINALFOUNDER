@@ -885,6 +885,97 @@ async def create_item(
     
     return {"message": "Item reported successfully", "item_id": item_id}
 
+# ===================== LOST & FOUND LINKING =====================
+
+@api_router.get("/items/lost/matching")
+async def get_matching_lost_items(
+    keyword: Optional[str] = None,
+    location: Optional[str] = None,
+    current_user: dict = Depends(require_student)
+):
+    """
+    Get lost items that might match a found item.
+    Used when a student finds an item and wants to link it to an existing lost report.
+    """
+    query = {
+        "item_type": "lost",
+        "is_deleted": False,
+        "status": {"$in": ["reported", "active", "found_reported"]}
+    }
+    
+    # Filter by keyword if provided
+    if keyword:
+        query["item_keyword"] = {"$regex": keyword, "$options": "i"}
+    
+    # Filter by location if provided (partial match)
+    if location:
+        query["location"] = {"$regex": location, "$options": "i"}
+    
+    lost_items = await db.items.find(query, {"_id": 0}).sort("created_at", -1).to_list(50)
+    
+    # Add safe student info (no sensitive data)
+    for item in lost_items:
+        student = await db.students.find_one(
+            {"id": item.get("student_id")},
+            {"_id": 0, "full_name": 1, "department": 1, "year": 1}
+        )
+        item["student"] = student or {"full_name": "Anonymous"}
+        # Remove sensitive fields
+        item.pop("secret_message", None)
+        item.pop("student_id", None)
+    
+    return lost_items
+
+@api_router.get("/items/found-similar")
+async def get_found_similar_items(current_user: dict = Depends(require_student)):
+    """
+    Get found items that are linked to the student's lost items.
+    This is the 'Found Similar Items' section for students.
+    """
+    user_id = current_user["sub"]
+    
+    # First, get all lost items reported by this student
+    my_lost_items = await db.items.find(
+        {"student_id": user_id, "item_type": "lost", "is_deleted": False},
+        {"_id": 0, "id": 1, "item_keyword": 1, "description": 1}
+    ).to_list(100)
+    
+    my_lost_item_ids = [item["id"] for item in my_lost_items]
+    
+    if not my_lost_item_ids:
+        return {"found_similar": [], "message": "You have no lost items reported"}
+    
+    # Find found items linked to any of my lost items
+    linked_found_items = await db.items.find(
+        {
+            "item_type": "found",
+            "is_deleted": False,
+            "related_lost_item_id": {"$in": my_lost_item_ids}
+        },
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    # Enrich with finder info (safe data only)
+    for item in linked_found_items:
+        finder = await db.students.find_one(
+            {"id": item.get("student_id")},
+            {"_id": 0, "full_name": 1, "department": 1, "year": 1}
+        )
+        item["finder"] = finder or {"full_name": "Anonymous"}
+        
+        # Get the related lost item info
+        related_lost = await db.items.find_one(
+            {"id": item.get("related_lost_item_id")},
+            {"_id": 0, "item_keyword": 1, "description": 1}
+        )
+        item["related_lost_item"] = related_lost
+        
+        # Remove sensitive data
+        item.pop("secret_message", None)
+        item.pop("student_id", None)
+    
+    return {"found_similar": linked_found_items, "count": len(linked_found_items)}
+
 # ===================== GET ITEMS =====================
 
 @api_router.get("/items")
