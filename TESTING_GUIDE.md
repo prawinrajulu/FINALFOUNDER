@@ -2,7 +2,7 @@
 
 ## 📌 **BEFORE YOU START**
 
-**Backend URL:** https://git-inspector-12.preview.emergentagent.com  
+**Backend URL:** https://findly-analytics.preview.emergentagent.com  
 **Super Admin Credentials:**
 - Username: `superadmin`
 - Password: Try `#123321#` or `SuperAdmin@123`
@@ -13,7 +13,7 @@
 
 ### Steps:
 1. Open browser (incognito/private mode)
-2. Go to: `https://git-inspector-12.preview.emergentagent.com/lobby`
+2. Go to: `https://findly-analytics.preview.emergentagent.com/lobby`
 3. **Expected:**
    - ✅ See "Common Lobby" page
    - ✅ Three tabs: All Items, Lost, Found
@@ -33,7 +33,7 @@
 ## ✅ **TEST 2: UPDATED LOGIN PAGE**
 
 ### Steps:
-1. Go to landing page: `https://git-inspector-12.preview.emergentagent.com/`
+1. Go to landing page: `https://findly-analytics.preview.emergentagent.com/`
 2. **Expected:**
    - ✅ "Student Login" button is BLUE and prominent
    - ✅ "Admin" button is outlined and secondary

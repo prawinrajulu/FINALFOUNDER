@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 class AIVerificationTester:
-    def __init__(self, base_url="https://git-inspector-12.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://findly-analytics.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.admin_token = None
         self.sam_token = None

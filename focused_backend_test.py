@@ -11,7 +11,7 @@ from datetime import datetime
 
 class FocusedTester:
     def __init__(self):
-        self.base_url = "https://git-inspector-12.preview.emergentagent.com/api"
+        self.base_url = "https://findly-analytics.preview.emergentagent.com/api"
         self.admin_token = None
         self.student_token = None
         self.test_lost_item_id = None

@@ -457,12 +457,12 @@ On first backend startup after deployment, the system will:
 
 ### Test Public Lobby:
 ```bash
-curl -X GET https://git-inspector-12.preview.emergentagent.com/api/lobby/items
+curl -X GET https://findly-analytics.preview.emergentagent.com/api/lobby/items
 ```
 
 ### Test Create Folder (Super Admin):
 ```bash
-curl -X POST https://git-inspector-12.preview.emergentagent.com/api/folders \
+curl -X POST https://findly-analytics.preview.emergentagent.com/api/folders \
   -H "Authorization: Bearer YOUR_SUPER_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name": "CSE", "type": "department"}'
@@ -470,14 +470,14 @@ curl -X POST https://git-inspector-12.preview.emergentagent.com/api/folders \
 
 ### Test Excel Upload to Folder:
 ```bash
-curl -X POST https://git-inspector-12.preview.emergentagent.com/api/folders/YEAR_FOLDER_UUID/upload-excel \
+curl -X POST https://findly-analytics.preview.emergentagent.com/api/folders/YEAR_FOLDER_UUID/upload-excel \
   -H "Authorization: Bearer YOUR_SUPER_ADMIN_TOKEN" \
   -F "file=@students.xlsx"
 ```
 
 ### Test Create Item with New Fields:
 ```bash
-curl -X POST https://git-inspector-12.preview.emergentagent.com/api/items \
+curl -X POST https://findly-analytics.preview.emergentagent.com/api/items \
   -H "Authorization: Bearer YOUR_STUDENT_TOKEN" \
   -F "item_type=lost" \
   -F "item_keyword=Phone" \
