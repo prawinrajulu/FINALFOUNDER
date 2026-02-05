@@ -230,8 +230,8 @@ export const AdminSidebar = ({ onClose }) => {
 
   // Close mobile menu on route change
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+    if (onClose) onClose();
+  }, [location.pathname, onClose]);
 
   const newLostCount = Math.max(0, itemCounts.lost - viewedCounts.lost);
   const newFoundCount = Math.max(0, itemCounts.found - viewedCounts.found);
