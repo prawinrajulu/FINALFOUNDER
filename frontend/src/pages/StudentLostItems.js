@@ -31,8 +31,22 @@ const StudentLostItems = () => {
       const response = await itemsAPI.getPublicItems();
       // Filter only lost items - ALL lost items visible to ALL students
       const lostItems = (response.data || []).filter(item => item.item_type === 'lost');
-      setItems(lostItems);
-      setFilteredItems(lostItems);
+      
+      // Sort items: Jewellery first (HIGH PRIORITY), then by date
+      const sortedItems = lostItems.sort((a, b) => {
+        const isJewelleryA = isJewelleryItem(a);
+        const isJewelleryB = isJewelleryItem(b);
+        
+        // Jewellery items come first
+        if (isJewelleryA && !isJewelleryB) return -1;
+        if (!isJewelleryA && isJewelleryB) return 1;
+        
+        // Within same category, sort by date (newest first)
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      });
+      
+      setItems(sortedItems);
+      setFilteredItems(sortedItems);
     } catch (err) {
       console.error('Failed to fetch lost items:', err);
       setError('Failed to load lost items. Please try again.');
@@ -43,6 +57,21 @@ const StudentLostItems = () => {
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Helper function to check if item is Jewellery
+  const isJewelleryItem = (item) => {
+    const keyword = item.item_keyword?.toLowerCase() || '';
+    const description = item.description?.toLowerCase() || '';
+    return keyword === 'jewellery' || 
+           keyword === 'jewelry' ||
+           description.includes('jewellery') ||
+           description.includes('jewelry') ||
+           description.includes('gold') ||
+           description.includes('ring') ||
+           description.includes('necklace') ||
+           description.includes('bracelet') ||
+           description.includes('earring');
   };
 
   const filterItems = () => {
