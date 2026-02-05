@@ -166,3 +166,151 @@ code, .mono {
         display: contents !important;
     }
 }
+
+/* ================================
+   ADMIN SIDEBAR RESPONSIVE STYLES
+   ================================ */
+
+/* Sidebar base styles */
+.sidebar {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    min-height: 100vh;
+    height: 100%;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Sidebar navigation link */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin: 0.125rem 0.75rem;
+    color: #94a3b8;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+
+.sidebar-link:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-link.active {
+    color: #ffffff;
+    background-color: #6366f1;
+}
+
+/* Desktop: Sidebar always visible */
+@media (min-width: 768px) {
+    .sidebar {
+        position: static;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+/* Mobile adjustments to prevent overflow */
+@media (max-width: 767px) {
+    /* Main container should not overflow */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Ensure cards and content don't overflow */
+    .item-card {
+        max-width: 100%;
+    }
+    
+    /* Tables should scroll horizontally */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Modal and dialog fixes */
+    [role="dialog"] {
+        max-width: calc(100vw - 2rem) !important;
+        margin: 1rem;
+    }
+}
+
+/* Item Card responsive */
+.item-card {
+    background: white;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.item-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.item-card-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+}
+
+/* Responsive grid for items */
+.items-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+    .items-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .items-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1280px) {
+    .items-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Spinner */
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Prevent text overflow */
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
