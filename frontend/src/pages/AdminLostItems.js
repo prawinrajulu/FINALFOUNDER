@@ -204,6 +204,7 @@ const AdminLostItems = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
