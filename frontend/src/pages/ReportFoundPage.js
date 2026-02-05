@@ -254,40 +254,77 @@ const ReportFoundPage = () => {
               </p>
             </div>
 
-            {/* Image Upload */}
-            <div className="space-y-2">
-              <Label>Item Image *</Label>
-              <div 
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                  imagePreview ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:border-slate-300'
-                }`}
-                onClick={() => document.getElementById('image-upload').click()}
-              >
-                {imagePreview ? (
-                  <div className="space-y-3">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="max-h-64 mx-auto rounded-lg"
-                    />
-                    <p className="text-sm text-emerald-600 font-medium">Image uploaded ✓</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Upload className="w-12 h-12 mx-auto text-slate-400" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">Click to upload image</p>
-                      <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 5MB</p>
-                    </div>
-                  </div>
-                )}
+            {/* Image Upload - OPTIONAL */}
+            <div className="space-y-3">
+              <Label>Item Image (Optional)</Label>
+              
+              {/* "I don't have an image" checkbox */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="no-image"
+                  checked={noImage}
+                  onChange={(e) => handleNoImageChange(e.target.checked)}
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <label htmlFor="no-image" className="text-sm text-slate-600 cursor-pointer flex items-center gap-2">
+                  <ImageOff className="w-4 h-4" />
+                  I don't have an image
+                </label>
               </div>
+
+              {/* Image upload area - disabled when "no image" is checked */}
+              {!noImage && (
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                    imagePreview ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                  onClick={() => document.getElementById('image-upload').click()}
+                >
+                  {imagePreview ? (
+                    <div className="space-y-3 relative">
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="max-h-64 mx-auto rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); clearImage(); }}
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <p className="text-sm text-emerald-600 font-medium">Image uploaded ✓</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Upload className="w-12 h-12 mx-auto text-slate-400" />
+                      <div>
+                        <p className="text-sm font-medium text-slate-700">Click to upload image</p>
+                        <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 5MB</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* No image message when checkbox is checked */}
+              {noImage && (
+                <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center bg-slate-50">
+                  <ImageOff className="w-12 h-12 mx-auto text-slate-400 mb-2" />
+                  <p className="text-sm text-slate-600">No image will be attached to this report</p>
+                  <p className="text-xs text-slate-400 mt-1">You can still submit without an image</p>
+                </div>
+              )}
+
               <input
                 id="image-upload"
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
+                disabled={noImage}
               />
             </div>
 
