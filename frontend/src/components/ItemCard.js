@@ -98,13 +98,22 @@ export const ItemCard = ({
     <>
       <div className="item-card animate-fade-in" data-testid={`item-card-${item.id}`}>
         <div className="relative">
-          <img
-            src={item.image_url ? `${BACKEND_URL}${item.image_url}` : '/placeholder-item.jpg'}
-            alt={item.description}
-            className="item-card-image"
-            onError={(e) => {
-              e.target.src = 'https://images.pexels.com/photos/3731256/pexels-photo-3731256.jpeg?auto=compress&cs=tinysrgb&w=400';
-            }}
+          {/* Image or No Image Placeholder */}
+          {item.image_url ? (
+            <img
+              src={`${BACKEND_URL}${item.image_url}`}
+              alt={item.description}
+              className="item-card-image"
+              onError={(e) => {
+                // Replace with placeholder on error
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
+          {/* No Image Placeholder - shown when no image_url or on error */}
+          <NoImagePlaceholder 
+            className={`item-card-image ${item.image_url ? 'hidden' : 'flex'}`}
           />
           <div className="absolute top-2 left-2">
             <Badge className={statusColors[item.status] || statusColors.active}>
