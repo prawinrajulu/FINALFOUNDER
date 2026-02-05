@@ -216,10 +216,25 @@ code, .mono {
     }
 }
 
-/* Mobile adjustments to prevent overflow */
+/* Mobile sidebar - FIXED FOR PROPER SLIDE-IN */
 @media (max-width: 767px) {
+    .sidebar {
+        width: 75vw;
+        max-width: 280px;
+        min-width: 240px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 50;
+    }
+    
     /* Main container should not overflow */
     body {
+        overflow-x: hidden;
+    }
+    
+    html {
         overflow-x: hidden;
     }
     
@@ -229,15 +244,30 @@ code, .mono {
     }
     
     /* Tables should scroll horizontally */
-    .table-container {
+    .table-container,
+    .overflow-x-auto {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+    
+    /* Table wrapper for admin tables */
+    table {
+        min-width: 600px;
     }
     
     /* Modal and dialog fixes */
     [role="dialog"] {
         max-width: calc(100vw - 2rem) !important;
         margin: 1rem;
+    }
+    
+    /* Force text to wrap/truncate */
+    .truncate-mobile {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 }
 
