@@ -36,9 +36,14 @@ const AdminLayout = () => {
         className={`
           fixed inset-y-0 left-0 z-[110] md:hidden
           w-[75vw] max-w-[280px]
+          bg-gradient-to-b from-slate-800 to-slate-900
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
+        style={{ 
+          willChange: 'transform',
+          WebkitBackfaceVisibility: 'hidden'
+        }}
       >
         <AdminSidebar onClose={handleCloseSidebar} />
       </div>
