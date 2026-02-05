@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Package, Upload, MapPin, Clock, ArrowLeft, Tag, ImageOff, X, Link2, Search, User } from 'lucide-react';
 
 const ITEM_KEYWORDS = [
+  'Jewellery',  // HIGH PRIORITY - Gold, rings, necklaces etc.
   'Phone',
   'Laptop',
   'Charger',
