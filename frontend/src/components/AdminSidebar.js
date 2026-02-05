@@ -228,9 +228,15 @@ export const AdminSidebar = ({ onClose }) => {
     }
   }, [location.pathname, itemCounts, pendingCount]);
 
-  // Close mobile menu on route change
+  // Close mobile menu on route change ONLY (not on initial mount or prop changes)
+  const previousPathRef = useRef(location.pathname);
+  
   useEffect(() => {
-    if (onClose) onClose();
+    // Only close on ACTUAL route changes, not initial mount
+    if (previousPathRef.current !== location.pathname) {
+      previousPathRef.current = location.pathname;
+      if (onClose) onClose();
+    }
   }, [location.pathname, onClose]);
 
   const newLostCount = Math.max(0, itemCounts.lost - viewedCounts.lost);
