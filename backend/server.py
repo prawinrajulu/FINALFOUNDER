@@ -1411,6 +1411,8 @@ async def create_ai_powered_claim(
     lost_location: str = Form(...),
     approximate_date: str = Form(...),
     proof_image: UploadFile = File(None),
+    match_percentage: str = Form("0"),
+    qa_data: str = Form("[]"),
     current_user: dict = Depends(require_student)
 ):
     """
@@ -1437,6 +1439,7 @@ async def create_ai_powered_claim(
             status_code=400,
             detail="You cannot claim an item you reported as found"
         )
+    
     
     # Check for existing pending claim
     existing_claim = await db.claims.find_one({
