@@ -451,7 +451,7 @@ const ReportFoundPage = () => {
                 />
                 <label htmlFor="no-image" className="text-sm text-slate-600 cursor-pointer flex items-center gap-2">
                   <ImageOff className="w-4 h-4" />
-                  I don't have an image
+                  I do not have an image
                 </label>
               </div>
 
